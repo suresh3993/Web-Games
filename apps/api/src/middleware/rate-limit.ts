@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from 'express';
 import { MemoryStore, rateLimit, type ClientRateLimitInfo, type Options, type Store } from 'express-rate-limit';
 import { RedisStore, type RedisReply } from 'rate-limit-redis';
+import { env } from '../config/env';
 import { HttpError } from '../lib/http-error';
 import { logger } from '../lib/logger';
 import { redis } from '../lib/redis';
@@ -57,6 +58,21 @@ const emailKey = (req: Request) => {
   return email || 'anonymous';
 };
 
+/** Per-account key; only used after `requireAuth`, so every request has a user. */
+const userKey = (req: Request) => req.auth?.user.id ?? 'anonymous';
+
+/**
+ * RedisStore preloads its Lua scripts in the constructor. When Redis is down at boot those
+ * promises reject before anything awaits them (one "unhandled rejection" per script and
+ * limiter). The store reloads scripts on demand, so mark the preloads as handled.
+ */
+export function createRedisStore(prefix: string, sendCommand: (...args: string[]) => Promise<RedisReply>): RedisStore {
+  const store = new RedisStore({ prefix, sendCommand: (command: string, ...args: string[]) => sendCommand(command, ...args) });
+  void store.incrementScriptSha.catch(() => undefined);
+  void store.getScriptSha.catch(() => undefined);
+  return store;
+}
+
 function limiter(name: string, options: Partial<Options>): RequestHandler {
   return rateLimit({
     standardHeaders: 'draft-7',
@@ -64,10 +80,7 @@ function limiter(name: string, options: Partial<Options>): RequestHandler {
     // Redis-backed so limits hold across API replicas; in-memory otherwise (or during a Redis outage).
     store: redis
       ? new FallbackStore(
-          new RedisStore({
-            prefix: `rl:${name}:`,
-            sendCommand: (command: string, ...args: string[]) => redis!.call(command, ...args) as Promise<RedisReply>,
-          }),
+          createRedisStore(`rl:${name}:`, (...args) => redis!.call(...(args as [string, ...string[]])) as Promise<RedisReply>),
           new MemoryStore(),
           `rl:${name}:`,
         )
@@ -78,11 +91,15 @@ function limiter(name: string, options: Partial<Options>): RequestHandler {
   });
 }
 
-/** Factories (not singletons) so every app instance — and every test — gets fresh counters. */
-export function createRateLimiters() {
+/**
+ * Factories (not singletons) so every app instance — and every test — gets fresh counters.
+ * RATE_LIMIT_MULTIPLIER scales only the volume limits (general API and gameplay), e.g. for
+ * automated smoke tests that launch every game; brute-force protections never scale.
+ */
+export function createRateLimiters(scale = env.rateLimitMultiplier) {
   return {
     /** Broad per-IP ceiling for the whole API. */
-    api: limiter('api', { windowMs: 15 * 60_000, limit: 1000 }),
+    api: limiter('api', { windowMs: 15 * 60_000, limit: 1000 * scale }),
     /** Per-IP login attempts. */
     loginIp: limiter('login-ip', { windowMs: 15 * 60_000, limit: 30 }),
     /** Failed logins per account across all IPs (slows credential stuffing on one account). */
@@ -97,6 +114,12 @@ export function createRateLimiters() {
     emailActions: limiter('email-actions', { windowMs: 60 * 60_000, limit: 10 }),
     /** Token submissions (verify / reset) per IP — blocks token guessing. */
     tokenSubmit: limiter('token-submit', { windowMs: 15 * 60_000, limit: 30 }),
+    /** Rounds started per account (one every ~7 s sustained). */
+    gameStart: limiter('game-start', { windowMs: 15 * 60_000, limit: 120 * scale, keyGenerator: userKey }),
+    /** Round submissions per account. */
+    scoreSubmit: limiter('score-submit', { windowMs: 15 * 60_000, limit: 120 * scale, keyGenerator: userKey }),
+    /** Game problem reports per account. */
+    reports: limiter('reports', { windowMs: 60 * 60_000, limit: 10, keyGenerator: userKey }),
   };
 }
 

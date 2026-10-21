@@ -1,5 +1,13 @@
 import { z } from 'zod';
-import { DEVICE_TYPES, DIFFICULTIES, GAME_SORTS, PUBLIC_GAME_STATUSES } from '@playverse/shared-types';
+import {
+  DEVICE_TYPES,
+  DIFFICULTIES,
+  GAME_OUTCOMES,
+  GAME_SORTS,
+  LEADERBOARD_PERIODS,
+  PUBLIC_GAME_STATUSES,
+  REPORT_REASONS,
+} from '@playverse/shared-types';
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -101,6 +109,44 @@ export const listGamesQuerySchema = z.object({
 });
 export type ListGamesQuery = z.infer<typeof listGamesQuerySchema>;
 export type ListGamesQueryInput = z.input<typeof listGamesQuerySchema>;
+
+// ---------------------------------------------------------------------------
+// Gameplay
+// ---------------------------------------------------------------------------
+
+/** Prisma cuid() identifiers. */
+export const idSchema = z.string().regex(/^c[a-z0-9]{20,31}$/, 'Invalid identifier');
+
+export const startGameSessionSchema = z.object({ slug: slugSchema });
+export type StartGameSessionInput = z.infer<typeof startGameSessionSchema>;
+
+/** Highest score the API accepts at all (fits a Postgres INT); per-game plausibility limits are stricter. */
+export const SCORE_HARD_LIMIT = 2_000_000_000;
+export const MAX_ROUND_MS = 4 * 60 * 60 * 1000;
+
+export const finishGameSessionSchema = z.object({
+  score: z.number().int().min(0).max(SCORE_HARD_LIMIT),
+  outcome: z.enum(GAME_OUTCOMES),
+  durationMs: z.number().int().min(0).max(MAX_ROUND_MS),
+  /** Game-specific counters, e.g. `{ lines: 12 }`. */
+  stats: z
+    .record(z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,39}$/, 'Invalid stat name'), z.number().finite())
+    .refine((s) => Object.keys(s).length <= 24, 'Too many stats')
+    .default({}),
+});
+export type FinishGameSessionInput = z.infer<typeof finishGameSessionSchema>;
+
+export const leaderboardQuerySchema = z.object({
+  period: z.enum(LEADERBOARD_PERIODS).default('all'),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+export type LeaderboardQuery = z.infer<typeof leaderboardQuerySchema>;
+
+export const gameReportSchema = z.object({
+  reason: z.enum(REPORT_REASONS),
+  details: z.string().trim().min(10, 'Please describe the problem (at least 10 characters)').max(2000),
+});
+export type GameReportInput = z.infer<typeof gameReportSchema>;
 
 /**
  * Converts a Zod error into `{ "path.to.field": ["message"] }`, the shape used by

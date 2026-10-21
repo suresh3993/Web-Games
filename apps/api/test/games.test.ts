@@ -105,7 +105,13 @@ describe('catalog endpoints', () => {
       primaryCategory: { slug: 'logic' },
     });
     expect(res.body.data.categories.map((c: { slug: string }) => c.slug).sort()).toEqual(['logic', 'puzzle']);
-    expect(res.body.data.runtimeKey).toBeUndefined();
+    // The player needs the module key; internal bookkeeping stays private.
+    expect(res.body.data.runtimeKey).toBeNull();
+    for (const field of ['maxScore', 'playCount', 'externalUrl', 'roadmapBatch', 'licenseNotes']) {
+      expect(res.body.data, field).not.toHaveProperty(field);
+    }
+    const snake = await createClient().get('/api/v1/games/snake');
+    expect(snake.body.data.runtimeKey).toBe('snake');
   });
 
   it('returns 404 for drafts and unknown games, and 400 for malformed slugs', async () => {

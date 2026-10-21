@@ -13,8 +13,11 @@ import { csrfProtection } from './middleware/csrf';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { createRateLimiters } from './middleware/rate-limit';
 import { authRouter } from './modules/auth/auth.routes';
+import { gameplayRouter } from './modules/gameplay/gameplay.routes';
 import { gamesRouter } from './modules/games/games.routes';
 import { healthRouter } from './modules/health/health.routes';
+import { leaderboardsRouter } from './modules/leaderboards/leaderboards.routes';
+import { usersRouter } from './modules/users/users.routes';
 
 export function createApp(): Express {
   const app = express();
@@ -58,7 +61,10 @@ export function createApp(): Express {
   v1.use(csrfProtection);
   v1.use('/health', healthRouter());
   v1.use('/auth', authRouter(limits));
-  v1.use('/games', gamesRouter());
+  v1.use('/games', gamesRouter(limits));
+  v1.use('/game-sessions', gameplayRouter(limits));
+  v1.use('/leaderboards', leaderboardsRouter());
+  v1.use('/users', usersRouter());
 
   app.use('/api/v1', v1);
 

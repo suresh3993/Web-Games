@@ -10,6 +10,9 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "registry": "node scripts/generate-registry.mjs",
+    "pretest": "node scripts/generate-registry.mjs",
+    "pretypecheck": "node scripts/generate-registry.mjs"
   }
 }

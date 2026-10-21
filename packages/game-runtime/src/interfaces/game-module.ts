@@ -91,7 +91,8 @@ export interface GameManifest {
   /** Stable identifier; must equal `Game.runtimeKey` in the catalog. */
   key: string;
   version: string;
-  engine: 'CANVAS' | 'PHASER' | 'REACT';
+  /** CANVAS = 2D canvas loop; DOM = HTML/CSS rendered board, card, puzzle and word games. */
+  engine: 'CANVAS' | 'DOM' | 'PHASER' | 'REACT';
   input: { keyboard: boolean; touch: boolean; pointer: boolean };
   supportsPause: boolean;
   supportsSound: boolean;

@@ -1,13 +1,13 @@
-import type { GameModule, GameModuleLoader } from './interfaces/game-module';
+import type { GameModule } from './interfaces/game-module';
+import { generatedRegistry } from './registry.generated';
 
 /**
- * Native game modules, keyed by `Game.runtimeKey`. Each entry is a dynamic
- * import so that Vite emits one chunk per game: the homepage never downloads a
- * game engine, and the player page downloads only the game being launched.
+ * Native game modules, keyed by `Game.runtimeKey` (= catalog slug). Each entry is a
+ * dynamic import, so Vite emits one chunk per game: the homepage never downloads a
+ * game, and the player page downloads only the game being launched.
+ * The list is generated from src/games/* by `npm run registry`.
  */
-export const gameRegistry = {
-  snake: () => import('./games/snake/index').then((m) => m.snakeGame),
-} satisfies Record<string, GameModuleLoader>;
+export const gameRegistry = generatedRegistry;
 
 export type RuntimeKey = keyof typeof gameRegistry;
 

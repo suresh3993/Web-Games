@@ -51,6 +51,8 @@ export interface RequestOptions {
   body?: unknown;
   query?: Record<string, QueryValue>;
   signal?: AbortSignal;
+  /** Let the request outlive the page (e.g. submitting a round while the tab closes). */
+  keepalive?: boolean;
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']): string {
@@ -81,6 +83,7 @@ async function send(path: string, options: RequestOptions, retried: boolean): Pr
       credentials: 'include',
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
       signal: options.signal,
+      keepalive: options.keepalive,
     });
   } catch (err) {
     if ((err as Error)?.name === 'AbortError') throw err;

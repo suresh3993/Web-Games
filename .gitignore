@@ -21,3 +21,7 @@ playwright/.cache/
 Thumbs.db
 .idea/
 *.log
+
+# Game smoke-test results and the staff login state it uses
+/reports/
+/playwright/.auth/

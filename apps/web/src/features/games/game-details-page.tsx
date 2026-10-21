@@ -1,7 +1,7 @@
-import { ArrowLeft, Clock, Gauge, Hourglass, Monitor, Smartphone, Tablet, Trophy, Users } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ArrowLeft, Clock, Eye, Gauge, Hourglass, Monitor, Play, Smartphone, Tablet, Trophy, Users } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import type { DeviceType, GameDetail } from '@playverse/shared-types';
+import type { DeviceType, GameDetail, LeaderboardPeriod } from '@playverse/shared-types';
 import { EmptyState } from '@/components/empty-state';
 import { CategoryIcon } from '@/components/game/category-icon';
 import { GameArt } from '@/components/game/game-art';
@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCurrentUser } from '@/features/auth/api';
+import { useLeaderboard } from '@/features/play/api';
+import { FavoriteButton, LeaderboardList } from '@/features/play/components';
 import { isApiError } from '@/lib/api';
 import { titleCase } from '@/lib/utils';
 import { useGame, useRelatedGames } from './api';
@@ -29,11 +31,15 @@ function Fact({ icon: Icon, label, children }: { icon: typeof Monitor; label: st
 }
 
 /**
- * Availability panel. The in-browser player ships in Milestone 3; until a game is
- * published with a tested runtime, the page states plainly that it is coming soon.
+ * Availability panel. Games are launchable only once published with a tested runtime;
+ * otherwise the page states plainly that they are coming soon. Launching needs an
+ * account (enforced by the API, explained here).
  */
 function AvailabilityPanel({ game }: { game: GameDetail }) {
   const { data: user } = useCurrentUser();
+  const playPath = `/games/${game.slug}/play`;
+  // Staff can QA unpublished games that already have a runtime (never scored).
+  const canPreview = !game.playable && Boolean(game.runtimeKey) && user && user.role !== 'USER';
   return (
     <div className="glass grid gap-3 rounded-xl border border-border p-5">
       {game.playable ? (
@@ -47,22 +53,36 @@ function AvailabilityPanel({ game }: { game: GameDetail }) {
       )}
       <p className="text-sm text-muted-foreground">
         {game.playable
-          ? 'This game is live. Log in to play it in your browser and save your scores.'
+          ? 'This game is live. Play it right here in your browser; your scores, stats and XP are saved.'
           : 'This game is in development. We only publish games after their controls, scoring and launch flow have been tested.'}
       </p>
       {user ? (
-        <p className="text-sm font-medium">
-          {game.playable
-            ? 'You’re signed in. In-browser launching arrives with the game player release.'
-            : 'You’re signed in — this game will appear in your library as soon as it launches.'}
-        </p>
+        <div className="flex flex-wrap gap-2">
+          {game.playable && (
+            <Button asChild size="lg">
+              <Link to={playPath}>
+                <Play aria-hidden="true" /> Play now
+              </Link>
+            </Button>
+          )}
+          {canPreview && (
+            <Button asChild variant="outline">
+              <Link to={playPath}>
+                <Eye aria-hidden="true" /> Preview (staff)
+              </Link>
+            </Button>
+          )}
+          <FavoriteButton slug={game.slug} title={game.title} />
+        </div>
       ) : (
         <div className="flex flex-wrap gap-2">
           <Button asChild>
-            <Link to={`/register`}>Create a free account</Link>
+            <Link to={`/login?next=${encodeURIComponent(game.playable ? playPath : `/games/${game.slug}`)}`}>
+              {game.playable ? 'Log in to play' : 'Log in'}
+            </Link>
           </Button>
           <Button asChild variant="outline">
-            <Link to={`/login?next=${encodeURIComponent(`/games/${game.slug}`)}`}>Log in</Link>
+            <Link to="/register">Create a free account</Link>
           </Button>
         </div>
       )}
@@ -70,7 +90,39 @@ function AvailabilityPanel({ game }: { game: GameDetail }) {
   );
 }
 
-function RelatedGames({ slug }: { slug: string }) {
+const PERIODS: { value: LeaderboardPeriod; label: string }[] = [
+  { value: 'all', label: 'All time' },
+  { value: 'week', label: 'This week' },
+  { value: 'day', label: 'Today' },
+];
+
+function GameLeaderboard({ slug }: { slug: string }) {
+  const [period, setPeriod] = useState<LeaderboardPeriod>('all');
+  const { data, isPending, isError } = useLeaderboard(slug, period, 10);
+  return (
+    <section id="leaderboard" aria-labelledby="leaderboard-title" className="glass mt-10 scroll-mt-24 rounded-xl border border-border p-6">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <h2 id="leaderboard-title" className="flex items-center gap-2 text-xl font-semibold">
+          <Trophy className="size-5" aria-hidden="true" /> Leaderboard
+        </h2>
+        <div role="group" aria-label="Leaderboard period" className="ml-auto flex gap-1">
+          {PERIODS.map((p) => (
+            <Button key={p.value} size="sm" variant={period === p.value ? 'primary' : 'ghost'} aria-pressed={period === p.value} onClick={() => setPeriod(p.value)}>
+              {p.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+      {isError ? (
+        <p className="text-sm text-muted-foreground">The leaderboard is unavailable right now.</p>
+      ) : (
+        <LeaderboardList entries={data?.entries} loading={isPending} />
+      )}
+    </section>
+  );
+}
+
+export function RelatedGames({ slug }: { slug: string }) {
   const { data, isPending, isError } = useRelatedGames(slug);
   if (isError || (!isPending && data.length === 0)) return null;
   return (
@@ -187,6 +239,8 @@ export function GameDetailsPage() {
             </h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">{game.instructions}</p>
           </section>
+
+          {game.playable && game.supportsScores && <GameLeaderboard slug={game.slug} />}
 
           <RelatedGames slug={game.slug} />
         </article>

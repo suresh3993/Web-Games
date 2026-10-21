@@ -12,11 +12,11 @@ import { prisma } from '../../database/prisma';
 import { cached } from '../../lib/cache';
 import { notFound } from '../../lib/http-error';
 
-const PUBLIC = { in: [...PUBLIC_GAME_STATUSES] } satisfies Prisma.EnumGameStatusFilter;
+export const PUBLIC = { in: [...PUBLIC_GAME_STATUSES] } satisfies Prisma.EnumGameStatusFilter;
 
 const categoryBrief = { select: { slug: true, name: true, icon: true, accentColor: true } } as const;
 
-const summarySelect = {
+export const summarySelect = {
   id: true,
   slug: true,
   title: true,
@@ -34,13 +34,13 @@ const summarySelect = {
   primaryCategory: categoryBrief,
 } satisfies Prisma.GameSelect;
 
-type SummaryRow = Prisma.GameGetPayload<{ select: typeof summarySelect }>;
+export type SummaryRow = Prisma.GameGetPayload<{ select: typeof summarySelect }>;
 
 /** A game is launchable only when published and backed by a runtime module or vetted provider URL. */
 const isPlayable = (g: Pick<SummaryRow, 'status' | 'engine' | 'runtimeKey' | 'externalUrl'>) =>
   g.status === 'PUBLISHED' && (g.engine === 'EXTERNAL_IFRAME' ? Boolean(g.externalUrl) : Boolean(g.runtimeKey));
 
-function toSummary(g: SummaryRow): GameSummary {
+export function toSummary(g: SummaryRow): GameSummary {
   return {
     id: g.id,
     slug: g.slug,
@@ -177,6 +177,7 @@ export async function getGameBySlug(slug: string): Promise<GameDetail> {
     description: g.description,
     instructions: g.instructions,
     engine: g.engine,
+    runtimeKey: g.runtimeKey,
     supportsProgress: g.supportsProgress,
     multiplayerMode: g.multiplayerMode,
     licenseType: g.licenseType,
@@ -203,4 +204,14 @@ export async function relatedGames(slug: string, limit = 6): Promise<GameSummary
     take: limit,
   });
   return rows.map(toSummary);
+}
+
+/** Resolves a public (COMING_SOON or PUBLISHED) game by slug, or throws 404. */
+export async function requirePublicGame(slug: string) {
+  const game = await prisma.game.findFirst({
+    where: { slug, status: PUBLIC },
+    select: { id: true, status: true, supportsScores: true },
+  });
+  if (!game) throw notFound('Game not found.');
+  return game;
 }

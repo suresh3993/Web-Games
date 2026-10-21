@@ -6,7 +6,8 @@ import { RouteErrorPage } from '@/routes/route-error-page';
 
 /**
  * Home is bundled eagerly (first paint); every other page is a lazy chunk.
- * Game engines will be split per game via @playverse/game-runtime's registry.
+ * Each game is its own chunk too (via @playverse/game-runtime's registry), loaded
+ * only by the player page when that game is launched.
  */
 export const router = createBrowserRouter([
   {
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
           { path: 'explore', lazy: () => import('@/features/games/explore-page').then((m) => ({ Component: m.ExplorePage })) },
           { path: 'categories', lazy: () => import('@/features/games/categories-page').then((m) => ({ Component: m.CategoriesPage })) },
           { path: 'games/:slug', lazy: () => import('@/features/games/game-details-page').then((m) => ({ Component: m.GameDetailsPage })) },
+          { path: 'games/:slug/play', lazy: () => import('@/features/play/game-player-page').then((m) => ({ Component: m.GamePlayerPage })) },
+          { path: 'favorites', lazy: () => import('@/features/library/library-pages').then((m) => ({ Component: m.FavoritesPage })) },
+          { path: 'recently-played', lazy: () => import('@/features/library/library-pages').then((m) => ({ Component: m.RecentlyPlayedPage })) },
+          { path: 'leaderboards', lazy: () => import('@/features/library/library-pages').then((m) => ({ Component: m.LeaderboardsPage })) },
           { path: 'login', lazy: () => import('@/features/auth/login-page').then((m) => ({ Component: m.LoginPage })) },
           { path: 'register', lazy: () => import('@/features/auth/register-page').then((m) => ({ Component: m.RegisterPage })) },
           { path: 'forgot-password', lazy: () => import('@/features/auth/forgot-password-page').then((m) => ({ Component: m.ForgotPasswordPage })) },

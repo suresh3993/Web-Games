@@ -35,6 +35,7 @@ const schema = z.object({
   SMTP_PASSWORD: optionalString,
   MAIL_FROM: z.string().default('PLAYVERSE <no-reply@playverse.local>'),
   API_DOCS_ENABLED: z.enum(['true', 'false', '1', '0']).optional(),
+  RATE_LIMIT_MULTIPLIER: z.coerce.number().int().min(1).max(100).default(1),
 });
 
 const parsed = schema.safeParse(process.env);
@@ -72,6 +73,8 @@ export const env = {
     from: raw.MAIL_FROM,
   },
   apiDocsEnabled: raw.API_DOCS_ENABLED ? ['true', '1'].includes(raw.API_DOCS_ENABLED) : !isProduction,
+  /** Scales the general API and gameplay limits (never the login/registration/token limits). */
+  rateLimitMultiplier: raw.RATE_LIMIT_MULTIPLIER,
 } as const;
 
 export type Env = typeof env;

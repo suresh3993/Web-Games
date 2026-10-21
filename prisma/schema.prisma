@@ -55,6 +55,7 @@ enum DeviceType {
 
 enum GameEngine {
   CANVAS
+  DOM
   PHASER
   REACT
   EXTERNAL_IFRAME
@@ -218,6 +219,8 @@ model Game {
   status            GameStatus   @default(DRAFT)
   supportsScores    Boolean      @default(true) @map("supports_scores")
   supportsProgress  Boolean      @default(false) @map("supports_progress")
+  /// Plausibility ceiling from the runtime manifest; higher submissions are flagged.
+  maxScore          Int?         @map("max_score")
   multiplayerMode   String?      @map("multiplayer_mode")
   isFeatured        Boolean      @default(false) @map("is_featured")
   licenseType       LicenseType  @default(ORIGINAL) @map("license_type")
@@ -276,6 +279,8 @@ model GameSession {
   endedAt         DateTime?         @map("ended_at")
   /// Active play time reported by the client, bounded server-side by wall-clock time.
   durationMs      Int?              @map("duration_ms")
+  /// Admin/moderator QA launch of an unpublished game: never scored, ranked or rewarded.
+  preview         Boolean           @default(false)
 
   user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   game  Game       @relation(fields: [gameId], references: [id], onDelete: Restrict)
@@ -305,6 +310,7 @@ model GameScore {
   session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([gameId, flagged, score(sort: Desc)])
+  @@index([gameId, createdAt])
   @@index([userId, gameId])
   @@map("game_scores")
 }
@@ -313,10 +319,13 @@ model GameScore {
 model UserGameStat {
   userId       String   @map("user_id")
   gameId       String   @map("game_id")
-  bestScore    Int?     @map("best_score")
-  plays        Int      @default(0)
-  totalTimeMs  BigInt   @default(0) @map("total_time_ms")
-  lastPlayedAt DateTime @map("last_played_at")
+  /// Best unflagged score; flagged rounds never count.
+  bestScore    Int?      @map("best_score")
+  /// When `bestScore` was first reached (leaderboard tie-break: earlier wins).
+  bestScoreAt  DateTime? @map("best_score_at")
+  plays        Int       @default(0)
+  totalTimeMs  BigInt    @default(0) @map("total_time_ms")
+  lastPlayedAt DateTime  @map("last_played_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   game Game @relation(fields: [gameId], references: [id], onDelete: Restrict)

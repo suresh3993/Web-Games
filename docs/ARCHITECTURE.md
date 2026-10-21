@@ -2,7 +2,7 @@
 
 ## Overview
 
-```
+```text
 Browser ──► Nginx (prod) / Vite dev server ──► /api/v1 ──► Express API ──► PostgreSQL (Prisma)
    │            static SPA                                      ├──► Redis (rate limits, cache)
    │                                                            └──► SMTP (Mailpit in dev)
@@ -25,6 +25,8 @@ Browser ──► Nginx (prod) / Vite dev server ──► /api/v1 ──► Exp
 | Rate limiting | express-rate-limit with a Redis store that falls back to memory | Works across replicas; a Redis outage degrades instead of failing every request |
 | Catalog truth | `packages/game-catalog` (code) → idempotent seed → DB | Reviewable diffs; the seed never overrides admin publishing decisions |
 | Game status | `DRAFT` / `COMING_SOON` / `PUBLISHED` / `UNPUBLISHED`; `playable` = published **and** has a runtime | Never shows unlaunchable games as playable |
+| Game engines | Original TypeScript modules on two small in-house bases (`CANVAS`, `DOM`); no Phaser | 114 games share one input, timing, sound and lifecycle layer; no third-party game code or assets to license; each game is a 1–11 kB lazy chunk plus shared kit chunks (7–22 kB, cached across games) |
+| Publishing | Only games that pass the browser smoke test are published, by script, with an audit entry | "Never represent a game as playable unless its launch flow has been tested" |
 | Versions | TypeScript 5.9, Vite 7, Prisma 6, Vitest 4 (pinned majors) | Stable, compatible set; newer majors (TS 7, Vite 8, Prisma 7) to be evaluated separately |
 
 ## Data model (Prisma)
@@ -66,16 +68,72 @@ Rules for module authors: render only inside `container`; never touch cookies, s
 use `host.random()`; emit `finished` exactly once; release every listener, timer and frame in `destroy()`.
 Snake (`games/snake`) is the reference implementation: pure rules in `logic.ts`, rendering and input in `index.ts`.
 
-## Scoring, XP and anti-abuse (implemented in Milestone 4)
+### Game modules and the game kit
 
-These rules are already reflected in the schema:
+All 114 catalog games are implemented as modules in `packages/game-runtime/src/games/<slug>/` (folder name =
+runtime key = catalog slug). `scripts/generate-registry.mjs` regenerates the registry from the folders, so a game
+cannot be registered without its module, and the catalog test fails if catalog and registry disagree.
 
-- A score is accepted only for a server-created `GameSession` owned by the user, once (`GameScore.sessionId` is unique).
-- Plausibility checks: `score ≤ manifest.scoring.maxScore`, duration bounded by server wall-clock time
-  (`startedAt` → finish), and minimum duration per game. Scores that fail are stored `flagged = true` and kept off
-  leaderboards. Client-side games are never fully trustworthy. The server-issued seed allows deterministic
-  re-simulation (input-log replay) for high-value leaderboards later.
-- XP per finished session: `10 + min(20, floor(activeMinutes × 4))`, at most 30 per session, and capped
-  per game per day (planned: 300). Awarded through `XpTransaction`, so a replayed request cannot award twice.
-- Level `n` requires `100 × n × (n − 1) / 2` total XP (100 for L2, 300 for L3, 600 for L4 …).
-- Score, stats, XP and achievements are updated in a single database transaction.
+Two engines, both plain TypeScript with no third-party game code or assets (all artwork is drawn in code; sound is
+synthesised with Web Audio):
+
+| Engine | Base class | Used for | Count |
+|---|---|---|---|
+| `CANVAS` | `kit/canvas-game.ts` | Real-time games: fixed-step loop, letterboxed 2D canvas, unified keyboard/pointer/touch input, immediate-mode buttons | 37 |
+| `DOM` | `kit/dom-game.ts` | Board, card, puzzle, word and math games: HTML/CSS views, delegated `data-action` clicks, keyboard and swipe hooks, pause-aware timers | 77 |
+
+Shared kit modules: seeded card decks (`cards.ts`), negamax/alpha-beta AI with difficulty blunders (`ai.ts`),
+word lists (`words.ts`), physics (`physics.ts`), maze generation (`maze.ts`), poker hand ranking (`poker.ts`),
+a platformer engine with a reachability checker and a solvable-by-construction level generator, and a timed
+quiz base. Generated puzzles (crate pusher, mahjong, light toggle, kakuro, calc cages, star battle, bridges, color
+link…) are built backwards from a solution so they are always solvable, and the rules tests prove it.
+
+Every module is verified at three levels (see [GAME_TRACKER.md](GAME_TRACKER.md)):
+
+1. **Contract test** (`src/contract.test.ts`, jsdom): full lifecycle with fuzzed keyboard, pointer and button input,
+   pause/resume, restart, resize, finish and destroy; asserts no errors, one `finished` per round, scores within the
+   manifest ceiling, valid stats, an empty container and no leaked window listeners afterwards.
+2. **Rules test** (`src/determinism.test.ts`): no `Math.random`, storage, cookies, network, navigation, `eval` or
+   inline event handlers (which the CSP would block) anywhere in game code. Many games also have dedicated logic tests.
+3. **Browser smoke test** (`tests/e2e/smoke`): launches every game through the real player page and API.
+
+### Player page
+
+`/games/:slug/play` (`apps/web/src/features/play`) lazy-loads only the launched game's chunk, asks the API for a
+session (server seed), and drives a `GameController`: play, pause/resume, restart, end round, sound toggle,
+full screen (where supported), live score and personal best, controls from the manifest, top players, favourite
+toggle and problem reports. It resizes the game with a `ResizeObserver`, auto-pauses when the tab is hidden, warns on
+portrait screens for landscape games, sends a heartbeat every minute, and asks before in-app navigation ends a round
+(`useBlocker`) or the tab closes (`beforeunload`). A round ended by leaving, restarting or closing the tab is still
+submitted as `quit` (the request uses `fetch` keepalive so it survives the page going away).
+
+### Publishing pipeline
+
+```text
+module + unit/contract tests ──► seed (COMING_SOON) ──► staff preview smoke test ──► npm run games:publish ──► PUBLISHED
+```
+
+The seed never publishes. Only `scripts/publish-verified-games.ts` changes `COMING_SOON` to `PUBLISHED`, and only for
+games that passed the latest browser smoke run (desktop, plus mobile when the game supports phones). Each change
+is audit-logged. Details: [GAME_PUBLISHING.md](GAME_PUBLISHING.md).
+
+## Scoring, XP and anti-abuse
+
+Implemented in `apps/api/src/modules/gameplay` (rules also listed in [API.md](API.md#gameplay-rules)):
+
+- A score is accepted only for a server-created `GameSession` owned by the user, once. Finishing locks the player's
+  row (`SELECT … FOR UPDATE`), so concurrent submissions queue, and the second sees the round as already submitted.
+  `GameScore.sessionId` and `XpTransaction(userId, sourceType, sourceId)` are unique as a second guard.
+- Plausibility checks (`plausibility.ts`): `score ≤ Game.maxScore` (copied from the runtime manifest by the seed);
+  claimed active time ≤ server wall-clock time + 5 s (accepted duration is clamped to wall-clock time); a positive
+  score needs at least 1 s of play. Failing rounds are stored `flagged = true`, kept off leaderboards and personal
+  bests, earn no XP, and are audit-logged (`score.flagged`). Client-side games are never fully trustworthy; the
+  server-issued seed leaves room for deterministic re-simulation (input-log replay) for high-value leaderboards later.
+- XP per finished round: `10 + min(20, floor(activeMinutes × 4))` for rounds of at least 10 s, capped at 300 XP per
+  game per UTC day. Preview (staff QA) rounds earn nothing and do not count as plays.
+- Level `n` requires `100 × n × (n − 1) / 2` total XP (100 for L2, 300 for L3, 600 for L4 …). The functions live in
+  `@playverse/shared-types` so the web shows exactly what the API enforces.
+- Score, stats, best score, XP ledger and level are written in a single database transaction.
+- Leaderboards: all-time boards read `UserGameStat.bestScore` (indexed; ties go to whoever reached it first via
+  `bestScoreAt`); rolling week/day boards take each player's best unflagged score in the window. Suspended players are
+  hidden. Results are cached for 30 s and invalidated when a ranked score is submitted.

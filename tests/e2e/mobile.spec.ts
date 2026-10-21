@@ -5,7 +5,8 @@ test('mobile navigation menu opens, navigates and closes', async ({ page }) => {
   const toggle = page.getByRole('button', { name: 'Open menu' });
   await expect(toggle).toBeVisible();
   await toggle.click();
-  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  // The toggle's accessible name changes with its state.
+  await expect(page.getByRole('button', { name: 'Close menu' })).toHaveAttribute('aria-expanded', 'true');
   await page.getByRole('navigation', { name: 'Mobile' }).getByRole('link', { name: 'Explore' }).click();
   await expect(page).toHaveURL(/\/explore/);
   await expect(page.getByRole('navigation', { name: 'Mobile' })).toBeHidden();

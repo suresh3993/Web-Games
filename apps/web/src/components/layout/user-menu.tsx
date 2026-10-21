@@ -1,4 +1,4 @@
-import { LogOut, MonitorSmartphone } from 'lucide-react';
+import { Heart, History, LogOut, MonitorSmartphone, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import type { CurrentUser } from '@playverse/shared-types';
@@ -67,6 +67,16 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             </div>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate('/favorites')}>
+          <Heart aria-hidden="true" /> Favourites
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/recently-played')}>
+          <History aria-hidden="true" /> Recently played
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/leaderboards')}>
+          <Trophy aria-hidden="true" /> Leaderboards
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut(false)}>
           <LogOut aria-hidden="true" /> Log out

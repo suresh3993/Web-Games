@@ -10,6 +10,7 @@
 import { PrismaClient } from '@prisma/client';
 import { config } from 'dotenv';
 import { CATEGORIES, GAMES } from '@playverse/game-catalog';
+import { loadGameModule } from '@playverse/game-runtime';
 import { passwordSchema, emailSchema } from '@playverse/validation';
 import { hashPassword } from '../apps/api/src/modules/auth/password';
 
@@ -42,6 +43,8 @@ async function seedGames(categoryIds: Map<string, string>) {
       estimatedMinutes: g.estimatedMinutes,
       engine: g.engine,
       runtimeKey: g.runtimeKey ?? null,
+      // Plausibility ceiling comes straight from the runtime manifest (single source of truth).
+      maxScore: g.runtimeKey ? ((await loadGameModule(g.runtimeKey)).manifest.scoring?.maxScore ?? null) : null,
       supportsScores: g.supportsScores,
       supportsProgress: g.supportsProgress ?? false,
       multiplayerMode: g.multiplayerMode ?? null,
@@ -66,6 +69,13 @@ async function seedGames(categoryIds: Map<string, string>) {
       prisma.gameCategoryLink.createMany({ data: categoryLinks }),
     ]);
   }
+  // Entries removed from the catalog (e.g. renamed concepts) are hidden, never deleted:
+  // they may have history, and admins can still inspect them.
+  const retired = await prisma.game.updateMany({
+    where: { slug: { notIn: GAMES.map((g) => g.slug) }, status: { in: ['COMING_SOON', 'PUBLISHED'] } },
+    data: { status: 'DRAFT' },
+  });
+  if (retired.count) console.log(`• Hid ${retired.count} game(s) no longer in the catalog (status → DRAFT).`);
   return created;
 }
 

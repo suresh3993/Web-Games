@@ -67,6 +67,14 @@ export function createClient(app: Express = createApp()) {
       const token = await csrf();
       return agent.post(url).set('X-CSRF-Token', token).send(body ?? {});
     },
+    patch: async (url: string, body?: object) => {
+      const token = await csrf();
+      return agent.patch(url).set('X-CSRF-Token', token).send(body ?? {});
+    },
+    del: async (url: string) => {
+      const token = await csrf();
+      return agent.delete(url).set('X-CSRF-Token', token);
+    },
   };
 }
 
@@ -115,6 +123,8 @@ interface GameFixture {
   difficulty?: Difficulty;
   devices?: DeviceType[];
   runtimeKey?: string | null;
+  maxScore?: number | null;
+  supportsScores?: boolean;
   featured?: boolean;
   playCount?: number;
   category: string;
@@ -143,6 +153,8 @@ export async function seedCatalog(games: GameFixture[]) {
         estimatedMinutes: 5,
         engine: 'CANVAS',
         runtimeKey: g.runtimeKey ?? null,
+        maxScore: g.maxScore ?? null,
+        supportsScores: g.supportsScores ?? true,
         status: g.status ?? 'COMING_SOON',
         isFeatured: g.featured ?? false,
         playCount: g.playCount ?? 0,

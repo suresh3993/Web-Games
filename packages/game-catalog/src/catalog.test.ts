@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RUNTIME_KEYS, hasRuntime } from '@playverse/game-runtime';
+import { loadGameModule, RUNTIME_KEYS, hasRuntime } from '@playverse/game-runtime';
 import { CATEGORIES, GAMES } from './index';
 
 const FIRST_MILESTONE = [
@@ -71,5 +71,14 @@ describe('game catalog integrity', () => {
 
   it('only uses in-house licensing for native games', () => {
     expect(GAMES.every((g) => g.license === 'ORIGINAL')).toBe(true);
+  });
+
+  it('matches every catalog entry to its runtime manifest (engine and scoring)', async () => {
+    for (const game of GAMES) {
+      expect(game.runtimeKey, `${game.slug} has no runtime module`).toBeDefined();
+      const module = await loadGameModule(game.runtimeKey!);
+      expect(module.manifest.engine, game.slug).toBe(game.engine);
+      if (game.supportsScores) expect(module.manifest.scoring?.maxScore ?? 0, game.slug).toBeGreaterThan(0);
+    }
   });
 });

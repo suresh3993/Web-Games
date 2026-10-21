@@ -1,12 +1,14 @@
 # PLAYVERSE
 
 A full-stack browser gaming platform: React + Vite web app, Express + Prisma API, PostgreSQL, Redis, and a
-modular game runtime. The catalog roadmap has **114 original games**; see [docs/ROADMAP.md](docs/ROADMAP.md)
-for what is built today.
+modular game runtime with **114 original games**. See [docs/ROADMAP.md](docs/ROADMAP.md) for what is built today.
 
-> **Current state (Milestone 1 + Milestone 2 foundation).** Accounts, sessions, email verification, password reset,
-> the catalog API and the browsing UI work end-to-end. **No game is playable in the browser yet.** The game player
-> page lands in Milestone 3, so every catalog entry is shown as *Coming soon*.
+> **Current state.** All 114 games are implemented (original TypeScript, no third-party game code or assets), unit-
+> and contract-tested, and launched end-to-end in a real browser by an automated smoke test. Accounts, the catalog,
+> the game player, scores, XP and levels, per-game and global leaderboards, favourites and play history work.
+> **A game becomes playable on your instance only after it is published**: seeding creates every game as
+> *Coming soon*, and `npm run games:publish` publishes exactly the games that passed the smoke test
+> ([how](docs/GAME_PUBLISHING.md)). Achievements, daily challenges, profiles and the admin UI are still to come.
 
 ## Repository layout
 
@@ -17,12 +19,13 @@ apps/
 packages/
   shared-types/   API contracts shared by web and API
   validation/     Zod schemas used by BOTH the web forms and API validation
-  game-runtime/   Game integration contract, lifecycle controller, seeded RNG, game modules (Snake)
-  game-catalog/   Source of truth for 14 categories and the 114-game roadmap
+  game-runtime/   Game contract, lifecycle controller, seeded RNG, game kit and all 114 game modules
+  game-catalog/   Source of truth for the 14 categories and 114 catalog entries
 prisma/           schema.prisma, versioned migrations, idempotent seed
-tests/e2e/        Playwright end-to-end tests (real stack + Mailpit)
+tests/e2e/        Playwright end-to-end tests (real stack + Mailpit); tests/e2e/smoke launches every game
+scripts/          Catalog docs generator, smoke-verified game publisher
 docker/           Postgres init script, Nginx config
-docs/             Architecture, security checklist, roadmap, deployment, game tracker
+docs/             Architecture, API, security checklist, roadmap, deployment, game tracker, publishing
 ```
 
 ## Prerequisites
@@ -60,6 +63,26 @@ Then open **<http://localhost:5173>**. Emails (verification, password reset) are
 Optional admin account: set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `.env`, then re-run `npm run db:seed`.
 No default administrator is ever created.
 
+### Make the games playable
+
+Every game is seeded as *Coming soon*. An admin or moderator can already open any game at
+`/games/<slug>/play` in **preview mode** (nothing is scored). To publish the games for everyone, run the browser
+smoke test and publish what passed (about 10 minutes; details in [docs/GAME_PUBLISHING.md](docs/GAME_PUBLISHING.md)):
+
+```powershell
+$env:E2E_STAFF_EMAIL = "<your SEED_ADMIN_EMAIL>"
+$env:E2E_STAFF_PASSWORD = "<your SEED_ADMIN_PASSWORD>"
+$env:RATE_LIMIT_MULTIPLIER = "10"   # the smoke test launches 100+ games quickly
+$env:E2E_WEB_MODE = "preview"       # test the production build with the production CSP
+# Stop `npm run dev` first: Playwright starts (and afterwards stops) the servers with these settings.
+npx playwright install chromium     # first time only
+npm run test:e2e:games              # every game, desktop + touch phone
+npm run games:publish               # publishes only the games that passed
+```
+
+Players need an account with a verified email to launch games. Scores, XP, levels, leaderboards, favourites and
+history are recorded from then on.
+
 > macOS/Linux: identical, except `cp .env.example .env`.
 > The test database `playverse_test` is created automatically the first time the Postgres volume initialises.
 > If you created the volume before that script existed, run
@@ -71,7 +94,9 @@ No default administrator is ever created.
 |---|---|
 | `npm run dev` | API + web with hot reload |
 | `npm test` | All unit + integration tests (API tests need Postgres running) |
-| `npm run test:e2e` | Playwright E2E (first run: `npx playwright install chromium`) |
+| `npm run test:e2e` | Playwright user flows, desktop + mobile (first run: `npx playwright install chromium`) |
+| `npm run test:e2e:games` | Launch-flow smoke test of every game (needs a staff account, see above) |
+| `npm run games:publish` | Publish the games that passed the latest smoke test (`-- --dry-run` to preview) |
 | `npm run typecheck` | TypeScript across all workspaces and E2E specs |
 | `npm run build` | Production builds (API bundle + static web app) |
 | `npm run db:migrate` | Create a new migration after editing `prisma/schema.prisma` |
@@ -87,3 +112,4 @@ No default administrator is ever created.
 - [Roadmap & milestone status](docs/ROADMAP.md)
 - [Deployment & rollback](docs/DEPLOYMENT.md)
 - [Game implementation & licensing tracker](docs/GAME_TRACKER.md)
+- [Verifying and publishing games](docs/GAME_PUBLISHING.md)

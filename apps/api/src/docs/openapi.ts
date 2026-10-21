@@ -3,16 +3,21 @@ import {
   DEVICE_TYPES,
   DIFFICULTIES,
   GAME_ENGINES,
+  GAME_OUTCOMES,
   GAME_SORTS,
+  LEADERBOARD_PERIODS,
   LICENSE_TYPES,
   PUBLIC_GAME_STATUSES,
   ROLES,
 } from '@playverse/shared-types';
 import {
+  finishGameSessionSchema,
   forgotPasswordSchema,
+  gameReportSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  startGameSessionSchema,
   verifyEmailSchema,
 } from '@playverse/validation';
 
@@ -32,6 +37,9 @@ const error = (description: string) => json(ref('Error'), description);
 
 const csrfHeader = { in: 'header', name: 'X-CSRF-Token', required: true, schema: { type: 'string' }, description: 'Token from GET /auth/csrf' };
 const slugParam = { in: 'path', name: 'slug', required: true, schema: { type: 'string', pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' } };
+const sessionParam = { in: 'path', name: 'id', required: true, schema: { type: 'string' }, description: 'Game session id' };
+const auth = [{ sessionCookie: [] }];
+const nullableInt = { type: ['integer', 'null'] };
 
 const categoryBrief = {
   type: 'object',
@@ -48,7 +56,7 @@ export const openApiDocument = {
       'All state-changing requests require the `X-CSRF-Token` header obtained from `GET /auth/csrf`.',
   },
   servers: [{ url: '/api/v1' }],
-  tags: [{ name: 'Auth' }, { name: 'Games' }, { name: 'System' }],
+  tags: [{ name: 'Auth' }, { name: 'Games' }, { name: 'Gameplay' }, { name: 'Players' }, { name: 'System' }],
   components: {
     securitySchemes: {
       sessionCookie: { type: 'apiKey', in: 'cookie', name: 'pv_session', description: '`__Host-pv_session` when served over HTTPS' },
@@ -124,6 +132,7 @@ export const openApiDocument = {
               description: { type: 'string' },
               instructions: { type: 'string' },
               engine: { enum: [...GAME_ENGINES] },
+              runtimeKey: { type: ['string', 'null'], description: 'Module key in @playverse/game-runtime' },
               supportsProgress: { type: 'boolean' },
               multiplayerMode: { type: ['string', 'null'] },
               licenseType: { enum: [...LICENSE_TYPES] },
@@ -133,6 +142,56 @@ export const openApiDocument = {
             },
           },
         ],
+      },
+      GameSessionStart: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          seed: { type: 'string', description: "Seed for the round's deterministic RNG" },
+          preview: { type: 'boolean', description: 'Staff QA launch of an unpublished game: never scored or rewarded' },
+          startedAt: { type: 'string', format: 'date-time' },
+          personalBest: nullableInt,
+        },
+      },
+      GameSessionResult: {
+        type: 'object',
+        properties: {
+          sessionId: { type: 'string' },
+          preview: { type: 'boolean' },
+          score: { type: 'integer' },
+          outcome: { enum: [...GAME_OUTCOMES] },
+          durationMs: { type: 'integer', description: 'Active time accepted by the server (bounded by wall-clock time)' },
+          flagged: { type: 'boolean', description: 'Failed plausibility checks: kept off leaderboards and bests, no XP' },
+          personalBest: nullableInt,
+          isPersonalBest: { type: 'boolean' },
+          rank: nullableInt,
+          xpAwarded: { type: 'integer' },
+          xpNote: { type: ['string', 'null'] },
+          xp: { type: 'integer' },
+          level: { type: 'integer' },
+          leveledUp: { type: 'boolean' },
+        },
+      },
+      Leaderboard: {
+        type: 'object',
+        properties: {
+          period: { enum: [...LEADERBOARD_PERIODS] },
+          entries: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                rank: { type: 'integer' },
+                displayName: { type: 'string' },
+                avatarUrl: { type: ['string', 'null'] },
+                level: { type: 'integer' },
+                score: { type: 'integer' },
+                achievedAt: { type: 'string', format: 'date-time' },
+                isYou: { type: 'boolean' },
+              },
+            },
+          },
+        },
       },
     },
   },
@@ -283,6 +342,128 @@ export const openApiDocument = {
         summary: 'Games from the same primary category',
         parameters: [slugParam],
         responses: { 200: json(dataOf({ type: 'array', items: ref('GameSummary') })), 404: error('Not found') },
+      },
+    },
+    '/games/{slug}/leaderboard': {
+      get: {
+        tags: ['Games'],
+        summary: "Per-game leaderboard: each player's best unflagged score (ties share a rank)",
+        parameters: [
+          slugParam,
+          { in: 'query', name: 'period', schema: { enum: [...LEADERBOARD_PERIODS], default: 'all' }, description: 'All-time, or rolling 7 days / 24 hours' },
+          { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1, maximum: 50, default: 10 } },
+        ],
+        responses: { 200: json(dataOf(ref('Leaderboard'))), 400: error('Invalid query'), 404: error('Not found') },
+      },
+    },
+    '/games/{slug}/me': {
+      get: {
+        tags: ['Games'],
+        summary: "The current player's best, plays, rank and favourite flag for a game",
+        security: auth,
+        parameters: [slugParam],
+        responses: { 200: json(dataOf({ type: 'object' })), 401: error('Not logged in'), 404: error('Not found') },
+      },
+    },
+    '/games/{slug}/favorite': {
+      post: {
+        tags: ['Games'],
+        summary: 'Add to favourites (idempotent)',
+        security: auth,
+        parameters: [slugParam, csrfHeader],
+        responses: { 204: { description: 'Favourited' }, 401: error('Not logged in'), 404: error('Not found') },
+      },
+      delete: {
+        tags: ['Games'],
+        summary: 'Remove from favourites (idempotent)',
+        security: auth,
+        parameters: [slugParam, csrfHeader],
+        responses: { 204: { description: 'Removed' }, 401: error('Not logged in'), 404: error('Not found') },
+      },
+    },
+    '/games/{slug}/reports': {
+      post: {
+        tags: ['Games'],
+        summary: 'Report a problem with a game (an identical open report is not duplicated)',
+        security: auth,
+        parameters: [slugParam, csrfHeader],
+        requestBody: body(gameReportSchema),
+        responses: { 202: json(ref('Message'), 'Accepted'), 400: error('Validation error'), 401: error('Not logged in'), 429: error('Rate limited') },
+      },
+    },
+    '/game-sessions': {
+      post: {
+        tags: ['Gameplay'],
+        summary: 'Launch a game: starts a round and returns its seed',
+        description:
+          'Requires a logged-in account with a verified email. Published games start a scored round; staff (moderator/admin) ' +
+          'may launch unpublished games in preview mode, which is never scored, ranked or rewarded.',
+        security: auth,
+        parameters: [csrfHeader],
+        requestBody: body(startGameSessionSchema),
+        responses: {
+          201: json(dataOf(ref('GameSessionStart')), 'Round started'),
+          401: error('Not logged in'),
+          403: error('Email not verified, or CSRF'),
+          404: error('Not found'),
+          409: error('Game not available to play yet'),
+          429: error('Rate limited'),
+        },
+      },
+    },
+    '/game-sessions/{id}': {
+      patch: {
+        tags: ['Gameplay'],
+        summary: 'Heartbeat: keeps a long round from being treated as abandoned',
+        security: auth,
+        parameters: [sessionParam, csrfHeader],
+        responses: { 204: { description: 'Alive' }, 404: error('Not found'), 409: error('Round already ended') },
+      },
+    },
+    '/game-sessions/{id}/finish': {
+      post: {
+        tags: ['Gameplay'],
+        summary: 'Submit the result of a round (exactly once)',
+        description:
+          'Records the score, personal stats and XP in one transaction. Duration is bounded by server wall-clock time; scores above ' +
+          "the game's ceiling, impossible durations and instant scores are flagged (kept off leaderboards, no XP). " +
+          'XP: 10 + 4 per active minute (max 30) for rounds of 10 s or more, capped at 300 XP per game per UTC day. ' +
+          'Scores can only be submitted through a server-issued session; there is deliberately no free-standing score endpoint.',
+        security: auth,
+        parameters: [sessionParam, csrfHeader],
+        requestBody: body(finishGameSessionSchema),
+        responses: {
+          200: json(dataOf(ref('GameSessionResult'))),
+          400: error('Validation error'),
+          401: error('Not logged in'),
+          404: error('Not found (or not yours)'),
+          409: error('Already submitted, or expired'),
+          429: error('Rate limited'),
+        },
+      },
+    },
+    '/users/me/favorites': {
+      get: {
+        tags: ['Players'],
+        summary: 'Favourite games, newest first',
+        security: auth,
+        responses: { 200: json(dataOf({ type: 'array', items: ref('GameSummary') })), 401: error('Not logged in') },
+      },
+    },
+    '/users/me/history': {
+      get: {
+        tags: ['Players'],
+        summary: 'Recently played games with personal bests and play counts',
+        security: auth,
+        responses: { 200: json(dataOf({ type: 'array', items: { type: 'object' } })), 401: error('Not logged in') },
+      },
+    },
+    '/leaderboards/global': {
+      get: {
+        tags: ['Players'],
+        summary: 'Players ranked by total XP',
+        parameters: [{ in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 } }],
+        responses: { 200: json(dataOf({ type: 'array', items: { type: 'object' } })) },
       },
     },
   },
