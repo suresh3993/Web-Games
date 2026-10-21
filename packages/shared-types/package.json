@@ -1,0 +1,14 @@
+{
+  "name": "@playverse/shared-types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API contracts shared by the PLAYVERSE web app and API",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

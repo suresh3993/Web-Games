@@ -1,0 +1,21 @@
+{
+  "name": "@playverse/game-catalog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Source of truth for PLAYVERSE game categories and the 100+ game catalog roadmap",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@playverse/shared-types": "0.1.0"
+  },
+  "devDependencies": {
+    "@playverse/game-runtime": "0.1.0"
+  }
+}

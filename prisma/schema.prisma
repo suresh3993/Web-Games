@@ -1,0 +1,494 @@
+// PLAYVERSE database schema (PostgreSQL).
+// Conventions: cuid string IDs, camelCase fields mapped to snake_case tables/columns,
+// timestamps in UTC (timestamptz). Security-sensitive tokens are stored as SHA-256 hashes only.
+
+generator client {
+  provider = "prisma-client-js"
+  // native = developer machine; linux-musl = Alpine Docker image
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+enum GameStatus {
+  DRAFT
+  COMING_SOON
+  PUBLISHED
+  UNPUBLISHED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+enum DeviceType {
+  DESKTOP
+  TABLET
+  MOBILE
+}
+
+enum GameEngine {
+  CANVAS
+  PHASER
+  REACT
+  EXTERNAL_IFRAME
+}
+
+enum LicenseType {
+  ORIGINAL
+  OPEN_SOURCE
+  LICENSED_PROVIDER
+}
+
+enum GameSessionStatus {
+  ACTIVE
+  FINISHED
+  ABANDONED
+}
+
+enum ChallengeType {
+  PLAY_GAMES
+  REACH_SCORE
+  PLAY_MINUTES
+  PLAY_CATEGORY
+}
+
+enum NotificationType {
+  SYSTEM
+  ACHIEVEMENT
+  CHALLENGE
+  LEVEL_UP
+  MODERATION
+}
+
+enum ReportReason {
+  BROKEN
+  INAPPROPRIATE
+  CHEATING
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+// ---------------------------------------------------------------------------
+// Identity & sessions
+// ---------------------------------------------------------------------------
+
+model User {
+  id              String        @id @default(cuid())
+  /// Always stored lower-cased and trimmed.
+  email           String        @unique
+  emailVerifiedAt DateTime?     @map("email_verified_at")
+  /// Argon2id PHC string. Never returned by the API.
+  passwordHash    String        @map("password_hash")
+  displayName     String        @map("display_name") @db.VarChar(32)
+  avatarUrl       String?       @map("avatar_url")
+  role            Role          @default(USER)
+  status          AccountStatus @default(ACTIVE)
+  xp              Int           @default(0)
+  level           Int           @default(1)
+  lastLoginAt     DateTime?     @map("last_login_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  sessions          Session[]
+  authTokens        AuthToken[]
+  gameSessions      GameSession[]
+  scores            GameScore[]
+  stats             UserGameStat[]
+  favorites         UserFavorite[]
+  achievements      UserAchievement[]
+  challengeProgress UserChallengeProgress[]
+  xpTransactions    XpTransaction[]
+  notifications     Notification[]
+  reports           GameReport[]            @relation("ReportReporter")
+  resolvedReports   GameReport[]            @relation("ReportResolver")
+  auditLogs         AuditLog[]
+
+  @@index([role])
+  @@index([status])
+  @@index([xp(sort: Desc)])
+  @@map("users")
+}
+
+/// Server-side session. The cookie holds a random token; only its SHA-256 hash is stored.
+model Session {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  tokenHash  String   @unique @map("token_hash")
+  ipAddress  String?  @map("ip_address") @db.VarChar(64)
+  userAgent  String?  @map("user_agent") @db.VarChar(512)
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  expiresAt  DateTime @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+/// Single-use, expiring tokens for email verification and password reset (hash only).
+model AuthToken {
+  id        String        @id @default(cuid())
+  userId    String        @map("user_id")
+  type      AuthTokenType
+  tokenHash String        @unique @map("token_hash")
+  expiresAt DateTime      @map("expires_at")
+  usedAt    DateTime?     @map("used_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
+  @@map("auth_tokens")
+}
+
+// ---------------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------------
+
+model GameCategory {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  icon        String
+  accentColor String   @map("accent_color") @db.VarChar(16)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  primaryGames Game[]             @relation("PrimaryCategory")
+  games        GameCategoryLink[]
+  challenges   DailyChallenge[]
+
+  @@map("game_categories")
+}
+
+model Game {
+  id                String       @id @default(cuid())
+  slug              String       @unique
+  title             String
+  shortDescription  String       @map("short_description") @db.VarChar(280)
+  description       String
+  instructions      String
+  thumbnailUrl      String?      @map("thumbnail_url")
+  difficulty        Difficulty
+  supportedDevices  DeviceType[] @map("supported_devices")
+  estimatedMinutes  Int          @map("estimated_minutes")
+  engine            GameEngine
+  /// Key in @playverse/game-runtime's registry; null until a module exists.
+  runtimeKey        String?      @unique @map("runtime_key")
+  /// Only for EXTERNAL_IFRAME games from verified, authorised providers.
+  externalUrl       String?      @map("external_url")
+  status            GameStatus   @default(DRAFT)
+  supportsScores    Boolean      @default(true) @map("supports_scores")
+  supportsProgress  Boolean      @default(false) @map("supports_progress")
+  multiplayerMode   String?      @map("multiplayer_mode")
+  isFeatured        Boolean      @default(false) @map("is_featured")
+  licenseType       LicenseType  @default(ORIGINAL) @map("license_type")
+  licenseNotes      String?      @map("license_notes")
+  roadmapBatch      Int?         @map("roadmap_batch")
+  /// Denormalised counter, incremented when a game session starts.
+  playCount         Int          @default(0) @map("play_count")
+  primaryCategoryId String       @map("primary_category_id")
+  publishedAt       DateTime?    @map("published_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  primaryCategory GameCategory       @relation("PrimaryCategory", fields: [primaryCategoryId], references: [id], onDelete: Restrict)
+  categories      GameCategoryLink[]
+  sessions        GameSession[]
+  scores          GameScore[]
+  stats           UserGameStat[]
+  favorites       UserFavorite[]
+  achievements    Achievement[]
+  challenges      DailyChallenge[]
+  reports         GameReport[]
+
+  @@index([status, playCount(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([status, isFeatured])
+  @@index([primaryCategoryId])
+  @@map("games")
+}
+
+/// Many-to-many: a game appears in its primary category plus any secondary ones.
+model GameCategoryLink {
+  gameId     String @map("game_id")
+  categoryId String @map("category_id")
+
+  game     Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  category GameCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([gameId, categoryId])
+  @@index([categoryId])
+  @@map("game_category_links")
+}
+
+// ---------------------------------------------------------------------------
+// Gameplay
+// ---------------------------------------------------------------------------
+
+model GameSession {
+  id              String            @id @default(cuid())
+  userId          String            @map("user_id")
+  gameId          String            @map("game_id")
+  status          GameSessionStatus @default(ACTIVE)
+  /// Seed issued by the server so rounds can be re-simulated for verification.
+  seed            String            @db.VarChar(64)
+  startedAt       DateTime          @default(now()) @map("started_at")
+  lastHeartbeatAt DateTime          @default(now()) @map("last_heartbeat_at")
+  endedAt         DateTime?         @map("ended_at")
+  /// Active play time reported by the client, bounded server-side by wall-clock time.
+  durationMs      Int?              @map("duration_ms")
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game  Game       @relation(fields: [gameId], references: [id], onDelete: Restrict)
+  score GameScore?
+
+  @@index([userId, startedAt(sort: Desc)])
+  @@index([gameId, startedAt(sort: Desc)])
+  @@index([status, lastHeartbeatAt])
+  @@map("game_sessions")
+}
+
+model GameScore {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  gameId    String   @map("game_id")
+  /// One score per session makes submission idempotent and stops replayed submissions.
+  sessionId String   @unique @map("session_id")
+  score     Int
+  outcome   String   @db.VarChar(16)
+  stats     Json     @default("{}")
+  /// Set when plausibility checks fail; flagged scores are hidden from leaderboards.
+  flagged   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game    Game        @relation(fields: [gameId], references: [id], onDelete: Restrict)
+  session GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, flagged, score(sort: Desc)])
+  @@index([userId, gameId])
+  @@map("game_scores")
+}
+
+/// Per-user, per-game aggregate: personal best, play count, recently played.
+model UserGameStat {
+  userId       String   @map("user_id")
+  gameId       String   @map("game_id")
+  bestScore    Int?     @map("best_score")
+  plays        Int      @default(0)
+  totalTimeMs  BigInt   @default(0) @map("total_time_ms")
+  lastPlayedAt DateTime @map("last_played_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Restrict)
+
+  @@id([userId, gameId])
+  @@index([userId, lastPlayedAt(sort: Desc)])
+  @@index([gameId, bestScore(sort: Desc)])
+  @@map("user_game_stats")
+}
+
+model UserFavorite {
+  userId    String   @map("user_id")
+  gameId    String   @map("game_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@id([userId, gameId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("user_favorites")
+}
+
+// ---------------------------------------------------------------------------
+// Progression
+// ---------------------------------------------------------------------------
+
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String
+  icon        String
+  xpReward    Int      @default(0) @map("xp_reward")
+  /// Declarative unlock rule, e.g. {"type":"score_at_least","value":500}.
+  criteria    Json
+  /// Null for platform-wide achievements.
+  gameId      String?  @map("game_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  game  Game?             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  users UserAchievement[]
+
+  @@index([gameId])
+  @@map("achievements")
+}
+
+model UserAchievement {
+  userId        String   @map("user_id")
+  achievementId String   @map("achievement_id")
+  unlockedAt    DateTime @default(now()) @map("unlocked_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementId])
+  @@index([userId, unlockedAt(sort: Desc)])
+  @@map("user_achievements")
+}
+
+model DailyChallenge {
+  id          String        @id @default(cuid())
+  /// UTC calendar day the challenge is active.
+  date        DateTime      @db.Date
+  key         String        @db.VarChar(64)
+  title       String
+  description String
+  type        ChallengeType
+  target      Int
+  xpReward    Int           @map("xp_reward")
+  gameId      String?       @map("game_id")
+  categoryId  String?       @map("category_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  game     Game?                   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  category GameCategory?           @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  progress UserChallengeProgress[]
+
+  @@unique([date, key])
+  @@map("daily_challenges")
+}
+
+model UserChallengeProgress {
+  userId      String    @map("user_id")
+  challengeId String    @map("challenge_id")
+  progress    Int       @default(0)
+  completedAt DateTime? @map("completed_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, challengeId])
+  @@map("user_challenge_progress")
+}
+
+/// Append-only XP ledger. The unique source key makes every reward idempotent.
+model XpTransaction {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  amount     Int
+  reason     String   @db.VarChar(64)
+  /// e.g. "game_session", "achievement", "daily_challenge"
+  sourceType String   @map("source_type") @db.VarChar(32)
+  sourceId   String   @map("source_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sourceType, sourceId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("xp_transactions")
+}
+
+// ---------------------------------------------------------------------------
+// Engagement, moderation & audit
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+model GameReport {
+  id             String       @id @default(cuid())
+  gameId         String       @map("game_id")
+  reporterId     String?      @map("reporter_id")
+  reason         ReportReason
+  details        String       @db.VarChar(2000)
+  status         ReportStatus @default(OPEN)
+  resolvedById   String?      @map("resolved_by_id")
+  resolutionNote String?      @map("resolution_note") @db.VarChar(2000)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  game       Game  @relation(fields: [gameId], references: [id], onDelete: Restrict)
+  reporter   User? @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  resolvedBy User? @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([gameId])
+  @@map("game_reports")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  @map("actor_id")
+  action     String   @db.VarChar(64)
+  targetType String?  @map("target_type") @db.VarChar(32)
+  targetId   String?  @map("target_id")
+  metadata   Json     @default("{}")
+  ipAddress  String?  @map("ip_address") @db.VarChar(64)
+  userAgent  String?  @map("user_agent") @db.VarChar(512)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt(sort: Desc)])
+  @@index([action, createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}

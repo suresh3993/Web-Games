@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/space-grotesk';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens. Text/background pairs are checked against WCAG AA (≥ 4.5:1). */
+:root {
+  --background: #f6f7fb;
+  --foreground: #0f1430;
+  --card: #ffffff;
+  --card-foreground: #0f1430;
+  --glass: rgb(255 255 255 / 0.75);
+  --muted: #eceef6;
+  --muted-foreground: #5b6280;
+  --border: #dfe2ef;
+  --input: #d5d9ea;
+  --ring: #6d4aff;
+  --primary: #6d4aff;
+  --primary-foreground: #ffffff;
+  --primary-text: #5b2ff0;
+  --accent: #22d3ee;
+  --accent-foreground: #07101f;
+  --accent-text: #0e7490;
+  --destructive: #e11d48;
+  --destructive-foreground: #ffffff;
+  --success: #15803d;
+  --warning: #b45309;
+  --glow: rgb(109 74 255 / 0.25);
+}
+
+.dark {
+  --background: #070a17;
+  --foreground: #e6e9f5;
+  --card: #0e1430;
+  --card-foreground: #e6e9f5;
+  --glass: rgb(14 20 48 / 0.65);
+  --muted: #141b3a;
+  --muted-foreground: #9aa0c0;
+  --border: rgb(148 163 255 / 0.14);
+  --input: rgb(148 163 255 / 0.22);
+  --ring: #a78bfa;
+  --primary: #6d4aff;
+  --primary-foreground: #ffffff;
+  --primary-text: #a78bfa;
+  --accent: #22d3ee;
+  --accent-foreground: #07101f;
+  --accent-text: #22d3ee;
+  --destructive: #f43f5e;
+  --destructive-foreground: #ffffff;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --glow: rgb(124 92 255 / 0.35);
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --font-display: 'Space Grotesk Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-glass: var(--glass);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-text: var(--primary-text);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-text: var(--accent-text);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: light;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100dvh;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight;
+  }
+  /* Highly visible keyboard focus everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--glow);
+  }
+}
+
+@layer utilities {
+  .bg-aurora {
+    background:
+      radial-gradient(60rem 30rem at 10% -10%, rgb(124 92 255 / 0.22), transparent 60%),
+      radial-gradient(50rem 28rem at 90% 0%, rgb(34 211 238 / 0.14), transparent 60%),
+      radial-gradient(40rem 30rem at 50% 110%, rgb(59 130 246 / 0.12), transparent 60%);
+  }
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+  }
+  .text-gradient {
+    background: linear-gradient(90deg, #a78bfa, #60a5fa 45%, #22d3ee);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .shadow-glow {
+    box-shadow: 0 10px 40px -10px var(--glow);
+  }
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgb(148 163 255 / 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(148 163 255 / 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

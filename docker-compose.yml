@@ -1,0 +1,125 @@
+# PLAYVERSE local infrastructure.
+#
+#   Development (infra only):   docker compose up -d postgres redis mailpit
+#   Full containerised stack:   docker compose --profile app up -d --build
+#
+# Host ports are deliberately non-default (5433, 6380) to avoid clashing with
+# other local Postgres/Redis instances.
+
+name: playverse
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-playverse}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-playverse}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-playverse} -d ${POSTGRES_DB:-playverse}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+  # ---- Application containers (profile "app") -------------------------------
+  migrate:
+    profiles: ["app"]
+    build:
+      context: .
+      target: api
+    command: ["npx", "prisma", "migrate", "deploy"]
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-playverse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-playverse}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # One-off: docker compose --profile app run --rm seed
+  seed:
+    profiles: ["app"]
+    build:
+      context: .
+      target: seed
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-playverse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-playverse}?schema=public
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  api:
+    profiles: ["app"]
+    build:
+      context: .
+      target: api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-playverse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-playverse}?schema=public
+      REDIS_URL: redis://redis:6379
+      CORS_ORIGINS: ${APP_URL:-http://localhost:8080}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      TRUST_PROXY: 1
+      # The bundled stack serves plain HTTP on localhost. Put TLS in front and set this to true in real deployments.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      SMTP_HOST: ${SMTP_HOST_CONTAINER:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-PLAYVERSE <no-reply@playverse.local>}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:

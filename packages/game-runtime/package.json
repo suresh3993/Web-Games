@@ -1,0 +1,15 @@
+{
+  "name": "@playverse/game-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PLAYVERSE browser game integration contract, lifecycle controller and native game modules",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  }
+}

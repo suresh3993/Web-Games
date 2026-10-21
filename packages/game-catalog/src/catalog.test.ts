@@ -1,0 +1,75 @@
+import { describe, expect, it } from 'vitest';
+import { RUNTIME_KEYS, hasRuntime } from '@playverse/game-runtime';
+import { CATEGORIES, GAMES } from './index';
+
+const FIRST_MILESTONE = [
+  'snake',
+  'block-puzzle',
+  'minesweeper',
+  'sudoku',
+  'memory-match',
+  'tic-tac-toe',
+  'four-in-a-row',
+  'sliding-puzzle',
+  'brick-breaker',
+  'typing-challenge',
+];
+
+describe('game catalog integrity', () => {
+  it('contains at least 100 entries', () => {
+    expect(GAMES.length).toBeGreaterThanOrEqual(100);
+  });
+
+  it('has unique slugs and titles', () => {
+    expect(new Set(GAMES.map((g) => g.slug)).size).toBe(GAMES.length);
+    expect(new Set(GAMES.map((g) => g.title.toLowerCase())).size).toBe(GAMES.length);
+  });
+
+  it('has distinct descriptions and instructions (no duplicated filler records)', () => {
+    for (const field of ['summary', 'details', 'howToPlay'] as const) {
+      expect(new Set(GAMES.map((g) => g[field])).size, field).toBe(GAMES.length);
+    }
+  });
+
+  it('uses valid, kebab-case slugs', () => {
+    for (const game of GAMES) expect(game.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+  });
+
+  it('references only known categories and never repeats the primary category', () => {
+    const slugs = new Set<string>(CATEGORIES.map((c) => c.slug));
+    for (const game of GAMES) {
+      expect(slugs.has(game.category), game.slug).toBe(true);
+      for (const extra of game.extraCategories ?? []) {
+        expect(slugs.has(extra), `${game.slug} → ${extra}`).toBe(true);
+        expect(extra).not.toBe(game.category);
+      }
+    }
+  });
+
+  it('gives every category at least three games', () => {
+    for (const category of CATEGORIES) {
+      const count = GAMES.filter((g) => g.category === category.slug || g.extraCategories?.includes(category.slug)).length;
+      expect(count, category.slug).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('tags every local two-player game with the multiplayer category', () => {
+    for (const game of GAMES.filter((g) => g.multiplayerMode)) {
+      expect([game.category, ...(game.extraCategories ?? [])], game.slug).toContain('multiplayer');
+    }
+  });
+
+  it('assigns the first ten required games to batch 1', () => {
+    expect(GAMES.filter((g) => g.batch === 1).map((g) => g.slug).sort()).toEqual([...FIRST_MILESTONE].sort());
+  });
+
+  it('only references runtime keys that exist in the game runtime registry, and vice versa', () => {
+    const referenced = GAMES.flatMap((g) => (g.runtimeKey ? [g.runtimeKey] : []));
+    for (const key of referenced) expect(hasRuntime(key), key).toBe(true);
+    expect([...RUNTIME_KEYS].sort()).toEqual([...referenced].sort());
+  });
+
+  it('only uses in-house licensing for native games', () => {
+    expect(GAMES.every((g) => g.license === 'ORIGINAL')).toBe(true);
+  });
+});
