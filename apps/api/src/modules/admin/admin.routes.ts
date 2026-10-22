@@ -13,7 +13,7 @@ import {
   type ApiPaginated,
   type ApiSuccess,
   type AuditLogEntry,
-} from '@playverse/shared-types';
+} from '@suresh/shared-types';
 import {
   achievementInputSchema,
   achievementUpdateSchema,
@@ -33,7 +33,7 @@ import {
   userRoleSchema,
   userStatusSchema,
   z,
-} from '@playverse/validation';
+} from '@suresh/validation';
 import { requireRole } from '../../middleware/auth';
 import type { RateLimiters } from '../../middleware/rate-limit';
 import { listAuditLogs } from './audit-log.service';

@@ -1,5 +1,5 @@
 import { Prisma, type ChallengeType } from '@prisma/client';
-import type { CompletedChallenge, DailyChallenges, DailyChallengeView } from '@playverse/shared-types';
+import type { CompletedChallenge, DailyChallenges, DailyChallengeView } from '@suresh/shared-types';
 import { prisma } from '../../database/prisma';
 import { HttpError, notFound } from '../../lib/http-error';
 import { notify } from './notifications.service';
@@ -42,7 +42,7 @@ type ChallengeSpec = Omit<Prisma.DailyChallengeCreateManyInput, 'date'>;
  * two rounds. Days with challenges created by an admin are left as they are.
  */
 async function generate(day: string): Promise<ChallengeSpec[]> {
-  const random = seededRandom(`playverse-daily-${day}`);
+  const random = seededRandom(`suresh-daily-${day}`);
   const rounds = pick(random, [3, 4, 5]);
   const specs: ChallengeSpec[] = [
     { key: 'auto-rounds', title: 'Warm-up', description: `Finish ${rounds} rounds of any game.`, type: 'PLAY_GAMES', target: rounds, xpReward: 30 },

@@ -25,7 +25,7 @@ import {
   type LucideProps,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { DayCount, PaginationMeta } from '@playverse/shared-types';
+import type { DayCount, PaginationMeta } from '@suresh/shared-types';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 

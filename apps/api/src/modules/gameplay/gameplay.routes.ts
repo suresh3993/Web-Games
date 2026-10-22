@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { ApiSuccess, GameSessionResult, GameSessionStart } from '@playverse/shared-types';
-import { finishGameSessionSchema, idSchema, startGameSessionSchema, z } from '@playverse/validation';
+import type { ApiSuccess, GameSessionResult, GameSessionStart } from '@suresh/shared-types';
+import { finishGameSessionSchema, idSchema, startGameSessionSchema, z } from '@suresh/validation';
 import { requireAuth, requireVerifiedEmail } from '../../middleware/auth';
 import type { RateLimiters } from '../../middleware/rate-limit';
 import { audit } from '../audit/audit';

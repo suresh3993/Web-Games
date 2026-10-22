@@ -1,6 +1,6 @@
 import { Crown, Heart, Medal } from 'lucide-react';
 import { toast } from 'sonner';
-import type { LeaderboardEntry } from '@playverse/shared-types';
+import type { LeaderboardEntry } from '@suresh/shared-types';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isApiError } from '@/lib/api';

@@ -73,7 +73,7 @@ test('edit the profile, upload an avatar, export data and delete the account', a
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download my data' }).click();
   const file = await download;
-  expect(file.suggestedFilename()).toMatch(/^playverse-data-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(file.suggestedFilename()).toMatch(/^suresh-data-\d{4}-\d{2}-\d{2}\.json$/);
   const exported = JSON.parse(readFileSync((await file.path())!, 'utf8')) as { account: { email: string; displayName: string } };
   expect(exported.account).toMatchObject({ email, displayName: 'Renamed Owner' });
 

@@ -1,4 +1,4 @@
-import type { ApiErrorBody, ApiErrorCode } from '@playverse/shared-types';
+import type { ApiErrorBody, ApiErrorCode } from '@suresh/shared-types';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api/v1';
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -106,7 +106,7 @@ async function send(path: string, options: RequestOptions, retried: boolean): Pr
   return res;
 }
 
-/** Calls the PLAYVERSE API and unwraps `{ data }`. Throws `ApiError` on failure. */
+/** Calls the SURESH API and unwraps `{ data }`. Throws `ApiError` on failure. */
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const res = await send(path, options, false);
   if (res.status === 204) return undefined as T;

@@ -33,7 +33,7 @@ const schema = z.object({
   SMTP_SECURE: booleanish,
   SMTP_USER: optionalString,
   SMTP_PASSWORD: optionalString,
-  MAIL_FROM: z.string().default('PLAYVERSE <no-reply@playverse.local>'),
+  MAIL_FROM: z.string().default('SURESH <no-reply@suresh.local>'),
   API_DOCS_ENABLED: z.enum(['true', 'false', '1', '0']).optional(),
   RATE_LIMIT_MULTIPLIER: z.coerce.number().int().min(1).max(100).default(1),
 });

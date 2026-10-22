@@ -1,5 +1,5 @@
 /**
- * In-house word data for the word games (written for PLAYVERSE; no third-party lists).
+ * In-house word data for the word games (written for SURESH; no third-party lists).
  * Kept in its own module so only word games download it.
  */
 

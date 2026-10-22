@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import type { GlobalLeaderboardEntry, Leaderboard, LeaderboardPeriod } from '@playverse/shared-types';
+import type { GlobalLeaderboardEntry, Leaderboard, LeaderboardPeriod } from '@suresh/shared-types';
 import { prisma } from '../../database/prisma';
 import { cached, invalidateCache } from '../../lib/cache';
 

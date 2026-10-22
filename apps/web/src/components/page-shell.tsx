@@ -1,7 +1,7 @@
 import { LogIn, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router';
-import type { CurrentUser } from '@playverse/shared-types';
+import type { CurrentUser } from '@suresh/shared-types';
 import { useCurrentUser } from '@/features/auth/api';
 import { cn } from '@/lib/utils';
 import { EmptyState } from './empty-state';

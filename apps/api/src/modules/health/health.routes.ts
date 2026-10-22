@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { ApiSuccess, HealthResponse } from '@playverse/shared-types';
+import type { ApiSuccess, HealthResponse } from '@suresh/shared-types';
 import { prisma } from '../../database/prisma';
 import { redisHealthy } from '../../lib/redis';
 

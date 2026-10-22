@@ -1,4 +1,4 @@
-import type { FavoriteGame, MyGameStats, PlayHistoryEntry } from '@playverse/shared-types';
+import type { FavoriteGame, MyGameStats, PlayHistoryEntry } from '@suresh/shared-types';
 import { prisma } from '../../database/prisma';
 import { notFound } from '../../lib/http-error';
 import { PUBLIC, requirePublicGame, summarySelect, toSummary } from '../games/games.service';

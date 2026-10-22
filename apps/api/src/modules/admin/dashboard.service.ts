@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { GAME_STATUSES, type AdminDashboard, type DayCount, type GameStatus } from '@playverse/shared-types';
+import { GAME_STATUSES, type AdminDashboard, type DayCount, type GameStatus } from '@suresh/shared-types';
 import { env } from '../../config/env';
 import { prisma } from '../../database/prisma';
 import { redisHealthy } from '../../lib/redis';

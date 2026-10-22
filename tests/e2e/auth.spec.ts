@@ -23,7 +23,7 @@ test('register → verify email → log in → log out', async ({ page }) => {
   const email = uniqueEmail('flow');
   await register(page, email);
 
-  const verifyLink = await linkFromEmail(email, /verify your playverse email/i, 'verify-email');
+  const verifyLink = await linkFromEmail(email, /verify your suresh email/i, 'verify-email');
   await page.goto(new URL(verifyLink).pathname + new URL(verifyLink).search);
   await expect(page.getByRole('heading', { name: 'Email verified' })).toBeVisible();
   // The token is stripped from the address bar after use.
@@ -60,7 +60,7 @@ test('forgot password → reset → log in with the new password', async ({ page
   await page.getByRole('button', { name: 'Send reset link' }).click();
   await expect(page.getByText(/if an account exists/i)).toBeVisible();
 
-  const resetLink = await linkFromEmail(email, /reset your playverse password/i, 'reset-password');
+  const resetLink = await linkFromEmail(email, /reset your suresh password/i, 'reset-password');
   await page.goto(new URL(resetLink).pathname + new URL(resetLink).search);
   await page.getByLabel('New password', { exact: true }).fill('a brand new passphrase');
   await page.getByLabel('Confirm new password').fill('a brand new passphrase');

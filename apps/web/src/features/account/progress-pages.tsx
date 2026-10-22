@@ -2,7 +2,7 @@ import { CalendarCheck, Check, Lock, Play, RefreshCw, Trophy } from 'lucide-reac
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import type { AchievementSummary, DailyChallengeView, MyAchievement } from '@playverse/shared-types';
+import type { AchievementSummary, DailyChallengeView, MyAchievement } from '@suresh/shared-types';
 import { AchievementIcon, ProgressBar } from '@/components/data-display';
 import { PageShell } from '@/components/page-shell';
 import { QueryError } from '@/components/query-error';

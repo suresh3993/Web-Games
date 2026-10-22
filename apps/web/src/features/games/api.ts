@@ -1,6 +1,6 @@
 import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query';
-import { GAME_SORTS, type CategorySummary, type GameDetail, type GameSort, type GameSummary, type PaginationMeta, type PublicGameStatus } from '@playverse/shared-types';
-import type { ListGamesQueryInput } from '@playverse/validation';
+import { GAME_SORTS, type CategorySummary, type GameDetail, type GameSort, type GameSummary, type PaginationMeta, type PublicGameStatus } from '@suresh/shared-types';
+import type { ListGamesQueryInput } from '@suresh/validation';
 import { api, apiPaginated } from '@/lib/api';
 
 export const gameKeys = {

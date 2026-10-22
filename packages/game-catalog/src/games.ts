@@ -1,8 +1,8 @@
-import type { DeviceType, Difficulty, GameEngine, LicenseType } from '@playverse/shared-types';
+import type { DeviceType, Difficulty, GameEngine, LicenseType } from '@suresh/shared-types';
 import type { CategorySlug } from './categories';
 
 /**
- * The PLAYVERSE catalog roadmap. Every entry is a distinct, original game
+ * The SURESH catalog roadmap. Every entry is a distinct, original game
  * concept implemented in-house (no third-party assets, no trademarked names).
  *
  * `batch` is the delivery batch from docs/ROADMAP.md. An entry only becomes
@@ -24,7 +24,7 @@ export interface CatalogGame {
   supportsScores: boolean;
   supportsProgress?: boolean;
   multiplayerMode?: 'local-2p';
-  /** Key in @playverse/game-runtime's registry once a module exists. */
+  /** Key in @suresh/game-runtime's registry once a module exists. */
   runtimeKey?: string;
   featured?: boolean;
   batch: number;

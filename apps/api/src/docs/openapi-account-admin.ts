@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CHALLENGE_TYPES, GAME_STATUSES, NOTIFICATION_TYPES, REPORT_STATUSES, ROLES } from '@playverse/shared-types';
+import { CHALLENGE_TYPES, GAME_STATUSES, NOTIFICATION_TYPES, REPORT_STATUSES, ROLES } from '@suresh/shared-types';
 import {
   achievementInputSchema,
   achievementUpdateSchema,
@@ -15,7 +15,7 @@ import {
   updateProfileSchema,
   userRoleSchema,
   userStatusSchema,
-} from '@playverse/validation';
+} from '@suresh/validation';
 
 /**
  * OpenAPI paths for profiles, progression, notifications, media and administration.

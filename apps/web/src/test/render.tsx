@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router';
 import { vi } from 'vitest';
-import type { CurrentUser } from '@playverse/shared-types';
+import type { CurrentUser } from '@suresh/shared-types';
 
 export const json = (status: number, body: unknown) =>
   status === 204 ? new Response(null, { status }) : new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });

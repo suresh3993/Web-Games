@@ -10,7 +10,7 @@ import {
   LICENSE_TYPES,
   PUBLIC_GAME_STATUSES,
   ROLES,
-} from '@playverse/shared-types';
+} from '@suresh/shared-types';
 import {
   finishGameSessionSchema,
   forgotPasswordSchema,
@@ -20,7 +20,7 @@ import {
   resetPasswordSchema,
   startGameSessionSchema,
   verifyEmailSchema,
-} from '@playverse/validation';
+} from '@suresh/validation';
 
 /**
  * OpenAPI 3.1 document. Request bodies are generated from the same Zod schemas the
@@ -50,10 +50,10 @@ const categoryBrief = {
 export const openApiDocument = {
   openapi: '3.1.0',
   info: {
-    title: 'PLAYVERSE API',
+    title: 'SURESH API',
     version: '1.0.0',
     description:
-      'REST API for the PLAYVERSE gaming platform. Authentication uses an HttpOnly session cookie. ' +
+      'REST API for the SURESH gaming platform. Authentication uses an HttpOnly session cookie. ' +
       'All state-changing requests require the `X-CSRF-Token` header obtained from `GET /auth/csrf`.',
   },
   servers: [{ url: '/api/v1' }],
@@ -133,7 +133,7 @@ export const openApiDocument = {
               description: { type: 'string' },
               instructions: { type: 'string' },
               engine: { enum: [...GAME_ENGINES] },
-              runtimeKey: { type: ['string', 'null'], description: 'Module key in @playverse/game-runtime' },
+              runtimeKey: { type: ['string', 'null'], description: 'Module key in @suresh/game-runtime' },
               supportsProgress: { type: 'boolean' },
               multiplayerMode: { type: ['string', 'null'] },
               licenseType: { enum: [...LICENSE_TYPES] },

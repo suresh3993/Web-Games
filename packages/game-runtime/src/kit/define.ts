@@ -8,7 +8,7 @@ type ManifestInput = Pick<GameManifest, 'key' | 'engine'> &
   };
 
 /**
- * Builds a GameModule with sensible manifest defaults. All PLAYVERSE games report
+ * Builds a GameModule with sensible manifest defaults. All SURESH games report
  * "higher is better" points so leaderboards share one ordering.
  */
 export function defineGame(input: ManifestInput, create: (host: GameHost) => GameInstance): GameModule {

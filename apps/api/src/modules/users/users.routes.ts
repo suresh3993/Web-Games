@@ -1,6 +1,6 @@
 import express, { Router } from 'express';
-import { AVATAR_MAX_BYTES, type ApiSuccess, type CurrentUser, type FavoriteGame, type MyAchievement, type PlayHistoryEntry, type UserProfile } from '@playverse/shared-types';
-import { changePasswordSchema, deleteAccountSchema, updateProfileSchema } from '@playverse/validation';
+import { AVATAR_MAX_BYTES, type ApiSuccess, type CurrentUser, type FavoriteGame, type MyAchievement, type PlayHistoryEntry, type UserProfile } from '@suresh/shared-types';
+import { changePasswordSchema, deleteAccountSchema, updateProfileSchema } from '@suresh/validation';
 import { requireAuth } from '../../middleware/auth';
 import type { RateLimiters } from '../../middleware/rate-limit';
 import { toCurrentUser } from '../auth/auth.service';
@@ -46,7 +46,7 @@ export function usersRouter(limits: RateLimiters): Router {
 
   router.get('/me/export', limits.dataExport, async (req, res) => {
     const data = await account.exportData(req.auth!.user, req);
-    const filename = `playverse-data-${new Date().toISOString().slice(0, 10)}.json`;
+    const filename = `suresh-data-${new Date().toISOString().slice(0, 10)}.json`;
     res
       .set({ 'Cache-Control': 'no-store', 'Content-Disposition': `attachment; filename="${filename}"` })
       .type('application/json')

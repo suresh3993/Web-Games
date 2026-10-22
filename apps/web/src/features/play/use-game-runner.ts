@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GameController, loadGameModule, type FinishedRound, type GameModule, type Viewport } from '@playverse/game-runtime';
-import { MAX_ROUND_MS, SCORE_HARD_LIMIT, type GameSessionResult, type GameSessionStart } from '@playverse/shared-types';
-import type { FinishGameSessionInput } from '@playverse/validation';
+import { GameController, loadGameModule, type FinishedRound, type GameModule, type Viewport } from '@suresh/game-runtime';
+import { MAX_ROUND_MS, SCORE_HARD_LIMIT, type GameSessionResult, type GameSessionStart } from '@suresh/shared-types';
+import type { FinishGameSessionInput } from '@suresh/validation';
 import { isApiError } from '@/lib/api';
 import { finishGameSession, sendHeartbeat, startGameSession, useInvalidateAfterRound } from './api';
 

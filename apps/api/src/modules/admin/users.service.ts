@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import type { Prisma, Role, User } from '@prisma/client';
-import type { AdminUserDetail, AdminUserRow, PaginationMeta } from '@playverse/shared-types';
-import type { AdminUsersQuery, UserStatusInput } from '@playverse/validation';
+import type { AdminUserDetail, AdminUserRow, PaginationMeta } from '@suresh/shared-types';
+import type { AdminUsersQuery, UserStatusInput } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { forbidden, HttpError, notFound } from '../../lib/http-error';
 import { sendMailInBackground } from '../../lib/mailer';

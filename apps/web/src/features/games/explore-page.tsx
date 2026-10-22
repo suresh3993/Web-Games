@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
-import { DEVICE_TYPES, DIFFICULTIES, GAME_SORTS, type GameSort } from '@playverse/shared-types';
+import { DEVICE_TYPES, DIFFICULTIES, GAME_SORTS, type GameSort } from '@suresh/shared-types';
 import { EmptyState } from '@/components/empty-state';
 import { GameGrid } from '@/components/game/game-card';
 import { QueryError } from '@/components/query-error';

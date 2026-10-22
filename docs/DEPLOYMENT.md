@@ -13,9 +13,9 @@
 ## Container images
 
 ```bash
-docker build --target api -t playverse-api .    # Node 22 Alpine, non-root, healthcheck
-docker build --target web -t playverse-web .    # Nginx serving the SPA, proxying /api to http://api:4000
-docker build --target seed -t playverse-seed .  # one-off catalog seeding
+docker build --target api -t suresh-api .    # Node 22 Alpine, non-root, healthcheck
+docker build --target web -t suresh-web .    # Nginx serving the SPA, proxying /api to http://api:4000
+docker build --target seed -t suresh-seed .  # one-off catalog seeding
 ```
 
 ## Single-host stack (docker compose)
@@ -52,9 +52,9 @@ Startup order: `postgres` (healthy) → `migrate` (`prisma migrate deploy`, exit
 
 ```bash
 # nightly logical backup (keep at least 14 days, store off-host, encrypt at rest)
-docker compose exec -T postgres pg_dump -U playverse -Fc playverse > backup-$(date +%F).dump
+docker compose exec -T postgres pg_dump -U suresh -Fc suresh > backup-$(date +%F).dump
 # restore into an empty database
-docker compose exec -T postgres pg_restore -U playverse -d playverse --clean --if-exists < backup.dump
+docker compose exec -T postgres pg_restore -U suresh -d suresh --clean --if-exists < backup.dump
 ```
 
 Test a restore regularly. A backup that has never been restored is not a backup.

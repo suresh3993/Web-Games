@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { levelForXp, xpForLevel, xpForRound } from '@playverse/shared-types';
+import { levelForXp, xpForLevel, xpForRound } from '@suresh/shared-types';
 import { checkRound } from '../src/modules/gameplay/plausibility';
 
 describe('XP and levels', () => {

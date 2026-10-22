@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import { Prisma, type User } from '@prisma/client';
-import { THUMBNAIL_MAX_BYTES, type AdminCategory, type AdminGameDetail, type AdminGameRow, type PaginationMeta } from '@playverse/shared-types';
-import type { AdminGameCreate, AdminGameUpdate, AdminGamesQuery, CategoryInput, CategoryUpdate } from '@playverse/validation';
+import { THUMBNAIL_MAX_BYTES, type AdminCategory, type AdminGameDetail, type AdminGameRow, type PaginationMeta } from '@suresh/shared-types';
+import type { AdminGameCreate, AdminGameUpdate, AdminGamesQuery, CategoryInput, CategoryUpdate } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { invalidateCache } from '../../lib/cache';
 import { HttpError, notFound } from '../../lib/http-error';

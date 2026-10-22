@@ -1,7 +1,7 @@
 // Regenerates src/registry.generated.ts from the folders in src/games.
 // Each folder name is the game's runtime key; each module default-exports its GameModule
 // (Snake, the original reference module, uses a named export).
-// Run: npm run registry -w @playverse/game-runtime
+// Run: npm run registry -w @suresh/game-runtime
 import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

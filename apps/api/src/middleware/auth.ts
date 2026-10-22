@@ -1,5 +1,5 @@
 import type { RequestHandler } from 'express';
-import type { Role } from '@playverse/shared-types';
+import type { Role } from '@suresh/shared-types';
 import { forbidden, HttpError, unauthenticated } from '../lib/http-error';
 import { clearSessionCookie, resolveSession, SESSION_COOKIE, setSessionCookie } from '../modules/auth/sessions';
 

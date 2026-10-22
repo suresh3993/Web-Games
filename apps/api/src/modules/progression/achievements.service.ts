@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
-import type { AchievementCriteria, AchievementSummary, MyAchievement, UnlockedAchievement } from '@playverse/shared-types';
-import { achievementCriteriaSchema } from '@playverse/validation';
+import type { AchievementCriteria, AchievementSummary, MyAchievement, UnlockedAchievement } from '@suresh/shared-types';
+import { achievementCriteriaSchema } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { cached, invalidateCache } from '../../lib/cache';
 import { logger } from '../../lib/logger';

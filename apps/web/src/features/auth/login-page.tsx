@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { loginSchema } from '@playverse/validation';
+import { loginSchema } from '@suresh/validation';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';
@@ -38,7 +38,7 @@ export function LoginPage() {
       description="Log in to play, save scores and track your progress."
       footer={
         <>
-          New to PLAYVERSE?{' '}
+          New to SURESH?{' '}
           <Link to="/register" className="font-medium text-primary-text hover:underline">
             Create an account
           </Link>

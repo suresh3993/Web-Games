@@ -1,7 +1,7 @@
 import { ArrowLeft, Clock, Eye, Gauge, Hourglass, Monitor, Play, Smartphone, Tablet, Trophy, Users } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import type { DeviceType, GameDetail, LeaderboardPeriod } from '@playverse/shared-types';
+import type { DeviceType, GameDetail, LeaderboardPeriod } from '@suresh/shared-types';
 import { EmptyState } from '@/components/empty-state';
 import { CategoryIcon } from '@/components/game/category-icon';
 import { GameArt } from '@/components/game/game-art';

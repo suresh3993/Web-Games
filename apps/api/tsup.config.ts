@@ -9,5 +9,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   // Workspace packages ship TypeScript source, so bundle them; keep npm deps external.
-  noExternal: [/^@playverse\//],
+  noExternal: [/^@suresh\//],
 });

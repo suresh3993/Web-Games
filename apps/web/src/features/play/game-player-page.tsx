@@ -24,7 +24,7 @@ import {
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
 import { Link, useBlocker, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import type { CurrentUser, GameDetail, GameOutcome } from '@playverse/shared-types';
+import type { CurrentUser, GameDetail, GameOutcome } from '@suresh/shared-types';
 import { AchievementIcon } from '@/components/data-display';
 import { EmptyState } from '@/components/empty-state';
 import { QueryError } from '@/components/query-error';

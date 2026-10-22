@@ -140,7 +140,7 @@ export interface GameDetail extends GameSummary {
   description: string;
   instructions: string;
   engine: GameEngine;
-  /** Module key in @playverse/game-runtime; null until a runtime exists. */
+  /** Module key in @suresh/game-runtime; null until a runtime exists. */
   runtimeKey: string | null;
   supportsProgress: boolean;
   multiplayerMode: string | null;
@@ -154,7 +154,7 @@ export interface GameDetail extends GameSummary {
 // Gameplay, scores and progression
 // ---------------------------------------------------------------------------
 
-/** Mirrors `GameOutcome` in @playverse/game-runtime. */
+/** Mirrors `GameOutcome` in @suresh/game-runtime. */
 export const GAME_OUTCOMES = ['won', 'lost', 'completed', 'quit'] as const;
 export type GameOutcome = (typeof GAME_OUTCOMES)[number];
 

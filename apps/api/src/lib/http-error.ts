@@ -1,4 +1,4 @@
-import type { ApiErrorCode } from '@playverse/shared-types';
+import type { ApiErrorCode } from '@suresh/shared-types';
 
 export class HttpError extends Error {
   constructor(

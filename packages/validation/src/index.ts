@@ -16,7 +16,7 @@ import {
   REPORT_STATUSES,
   ROLES,
   SCORE_HARD_LIMIT,
-} from '@playverse/shared-types';
+} from '@suresh/shared-types';
 
 // Plain constants live in shared-types (no zod), so browser code can use them cheaply.
 export { MAX_ROUND_MS, SCORE_HARD_LIMIT };

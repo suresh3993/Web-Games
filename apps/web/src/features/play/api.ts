@@ -9,8 +9,8 @@ import type {
   MessageResponse,
   MyGameStats,
   PlayHistoryEntry,
-} from '@playverse/shared-types';
-import type { FinishGameSessionInput, GameReportInput } from '@playverse/validation';
+} from '@suresh/shared-types';
+import type { FinishGameSessionInput, GameReportInput } from '@suresh/validation';
 import { useCurrentUser, meQueryKey } from '@/features/auth/api';
 import { api } from '@/lib/api';
 

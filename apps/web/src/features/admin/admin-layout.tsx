@@ -1,7 +1,7 @@
 import { CalendarCheck, FolderTree, Gamepad2, LayoutDashboard, ScrollText, ShieldX, Trophy, Users, Flag, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
-import type { CurrentUser, Role } from '@playverse/shared-types';
+import type { CurrentUser, Role } from '@suresh/shared-types';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';

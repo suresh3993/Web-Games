@@ -2,7 +2,7 @@ import { Search, ShieldCheck, UserCog } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { ROLES, type AdminUserRow, type Role } from '@playverse/shared-types';
+import { ROLES, type AdminUserRow, type Role } from '@suresh/shared-types';
 import { Pagination } from '@/components/data-display';
 import { Avatar } from '@/components/layout/user-menu';
 import { QueryError } from '@/components/query-error';

@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import type { AchievementCriteria, GameSessionResult } from '@playverse/shared-types';
+import type { AchievementCriteria, GameSessionResult } from '@suresh/shared-types';
 import { dayKey, dayStart, ensureDailyChallenges, niceTarget } from '../src/modules/progression/challenges.service';
 import { createClient, createUser, loginAs, prisma, resetDatabase, seedCatalog } from './helpers';
 

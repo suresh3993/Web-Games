@@ -1,6 +1,6 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CurrentUser, MessageResponse } from '@playverse/shared-types';
-import type { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from '@playverse/validation';
+import type { CurrentUser, MessageResponse } from '@suresh/shared-types';
+import type { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from '@suresh/validation';
 import { api, isApiError, resetCsrfToken } from '@/lib/api';
 
 export const meQueryKey = ['auth', 'me'] as const;

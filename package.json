@@ -1,9 +1,9 @@
 {
-  "name": "playverse",
+  "name": "suresh",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PLAYVERSE — online browser gaming platform (monorepo)",
+  "description": "SURESH — online browser gaming platform (monorepo)",
   "workspaces": [
     "packages/*",
     "apps/*"
@@ -13,8 +13,8 @@
     "npm": ">=10"
   },
   "scripts": {
-    "dev": "concurrently -k -n api,web -c magenta,cyan \"npm run dev -w @playverse/api\" \"npm run dev -w @playverse/web\"",
-    "build": "npm run build -w @playverse/api && npm run build -w @playverse/web",
+    "dev": "concurrently -k -n api,web -c magenta,cyan \"npm run dev -w @suresh/api\" \"npm run dev -w @suresh/web\"",
+    "build": "npm run build -w @suresh/api && npm run build -w @suresh/web",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tests/tsconfig.json",
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "playwright test --project=desktop-chromium --project=mobile-chromium",

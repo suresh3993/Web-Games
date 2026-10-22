@@ -3,7 +3,7 @@ import { env } from '../config/env';
 
 export const logger = pino({
   level: env.logLevel,
-  base: { service: 'playverse-api' },
+  base: { service: 'suresh-api' },
   // Never log credentials, cookies or tokens.
   redact: {
     paths: [

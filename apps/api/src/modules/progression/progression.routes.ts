@@ -7,8 +7,8 @@ import type {
   DailyChallengeView,
   NotificationItem,
   UnreadCount,
-} from '@playverse/shared-types';
-import { idSchema, notificationsQuerySchema, z } from '@playverse/validation';
+} from '@suresh/shared-types';
+import { idSchema, notificationsQuerySchema, z } from '@suresh/validation';
 import { requireAuth } from '../../middleware/auth';
 import type { RateLimiters } from '../../middleware/rate-limit';
 import { listAchievements } from './achievements.service';

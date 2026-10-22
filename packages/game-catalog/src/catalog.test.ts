@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { loadGameModule, RUNTIME_KEYS, hasRuntime } from '@playverse/game-runtime';
-import { achievementInputSchema } from '@playverse/validation';
+import { loadGameModule, RUNTIME_KEYS, hasRuntime } from '@suresh/game-runtime';
+import { achievementInputSchema } from '@suresh/validation';
 import { ACHIEVEMENTS, CATEGORIES, GAMES } from './index';
 
 const FIRST_MILESTONE = [

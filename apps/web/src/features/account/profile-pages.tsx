@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'r
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import { AVATAR_MAX_BYTES, IMAGE_UPLOAD_TYPES, type CurrentUser } from '@playverse/shared-types';
-import { updateProfileSchema, type UpdateProfileInput } from '@playverse/validation';
+import { AVATAR_MAX_BYTES, IMAGE_UPLOAD_TYPES, type CurrentUser } from '@suresh/shared-types';
+import { updateProfileSchema, type UpdateProfileInput } from '@suresh/validation';
 import { AchievementIcon, ProgressBar, StatCard } from '@/components/data-display';
 import { GameGrid } from '@/components/game/game-card';
 import { Avatar } from '@/components/layout/user-menu';
@@ -346,7 +346,7 @@ export function EditProfilePage() {
       title="Edit profile"
       description={
         <>
-          Your public identity on PLAYVERSE. Account security lives in <Link to="/settings" className="underline">Settings</Link>.
+          Your public identity on SURESH. Account security lives in <Link to="/settings" className="underline">Settings</Link>.
         </>
       }
     >

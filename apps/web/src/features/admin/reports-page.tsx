@@ -2,7 +2,7 @@ import { BarChart3, Flag, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { REPORT_STATUSES, type AdminReport, type ReportStatus } from '@playverse/shared-types';
+import { REPORT_STATUSES, type AdminReport, type ReportStatus } from '@suresh/shared-types';
 import { DayBarChart, Pagination, RankedBars } from '@/components/data-display';
 import { EmptyState } from '@/components/empty-state';
 import { QueryError } from '@/components/query-error';

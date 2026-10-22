@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router';
-import { passwordSchema, z } from '@playverse/validation';
+import { passwordSchema, z } from '@suresh/validation';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';

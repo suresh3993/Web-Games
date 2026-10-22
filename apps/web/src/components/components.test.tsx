@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
-import type { GameSummary } from '@playverse/shared-types';
+import type { GameSummary } from '@suresh/shared-types';
 import { LeaderboardList } from '@/features/play/components';
 import { GameCard } from './game/game-card';
 import { FormField } from './ui/form-field';

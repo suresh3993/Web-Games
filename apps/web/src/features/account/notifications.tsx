@@ -1,7 +1,7 @@
 import { Bell, CalendarCheck, CheckCheck, Gavel, Info, Sparkles, Trophy } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import type { NotificationItem, NotificationType } from '@playverse/shared-types';
+import type { NotificationItem, NotificationType } from '@suresh/shared-types';
 import { Pagination } from '@/components/data-display';
 import { EmptyState } from '@/components/empty-state';
 import { PageShell, RequireAccount } from '@/components/page-shell';

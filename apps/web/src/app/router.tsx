@@ -8,7 +8,7 @@ import { RouteErrorPage } from '@/routes/route-error-page';
 
 /**
  * Home is bundled eagerly (first paint); every other page is a lazy chunk.
- * Each game is its own chunk too (via @playverse/game-runtime's registry), loaded
+ * Each game is its own chunk too (via @suresh/game-runtime's registry), loaded
  * only by the player page when that game is launched.
  *
  * Loaders only *start* the main data requests, in parallel with the page's code, and return at

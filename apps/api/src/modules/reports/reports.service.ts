@@ -1,4 +1,4 @@
-import type { GameReportInput } from '@playverse/validation';
+import type { GameReportInput } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { requirePublicGame } from '../games/games.service';
 

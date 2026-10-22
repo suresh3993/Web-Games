@@ -142,7 +142,7 @@ describe('personal data export', () => {
     await client.post('/api/v1/games/snake/favorite');
     const res = await client.get('/api/v1/users/me/export');
     expect(res.status).toBe(200);
-    expect(res.headers['content-disposition']).toMatch(/attachment; filename="playverse-data-\d{4}-\d{2}-\d{2}\.json"/);
+    expect(res.headers['content-disposition']).toMatch(/attachment; filename="suresh-data-\d{4}-\d{2}-\d{2}\.json"/);
     const data = JSON.parse(res.text);
     expect(data.account).toMatchObject({ id: user.id, email: user.email, displayName: 'Exporter' });
     expect(data.favorites).toEqual([expect.objectContaining({ game: 'snake' })]);

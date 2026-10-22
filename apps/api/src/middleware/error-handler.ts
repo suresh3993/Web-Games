@@ -1,8 +1,8 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
-import { flattenZodError } from '@playverse/validation';
-import type { ApiErrorBody } from '@playverse/shared-types';
+import { flattenZodError } from '@suresh/validation';
+import type { ApiErrorBody } from '@suresh/shared-types';
 import { HttpError } from '../lib/http-error';
 import { logger } from '../lib/logger';
 

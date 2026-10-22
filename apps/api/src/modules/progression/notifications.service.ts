@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
-import type { NotificationItem, NotificationType, PaginationMeta } from '@playverse/shared-types';
-import type { NotificationsQuery } from '@playverse/validation';
+import type { NotificationItem, NotificationType, PaginationMeta } from '@suresh/shared-types';
+import type { NotificationsQuery } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { notFound } from '../../lib/http-error';
 

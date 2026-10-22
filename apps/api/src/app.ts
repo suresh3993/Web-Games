@@ -91,7 +91,7 @@ export function createApp(): Express {
         },
       }),
       swaggerUi.serve,
-      swaggerUi.setup(openApiDocument, { customSiteTitle: 'PLAYVERSE API' }),
+      swaggerUi.setup(openApiDocument, { customSiteTitle: 'SURESH API' }),
     );
   }
 

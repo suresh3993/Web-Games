@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'r
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { DEVICE_TYPES, DIFFICULTIES, GAME_STATUSES, IMAGE_UPLOAD_TYPES, THUMBNAIL_MAX_BYTES, type AdminGameDetail, type GameStatus } from '@playverse/shared-types';
-import { adminGameCreateSchema, z, type AdminGameCreate } from '@playverse/validation';
+import { DEVICE_TYPES, DIFFICULTIES, GAME_STATUSES, IMAGE_UPLOAD_TYPES, THUMBNAIL_MAX_BYTES, type AdminGameDetail, type GameStatus } from '@suresh/shared-types';
+import { adminGameCreateSchema, z, type AdminGameCreate } from '@suresh/validation';
 import { Pagination } from '@/components/data-display';
 import { GameArt } from '@/components/game/game-art';
 import { QueryError } from '@/components/query-error';

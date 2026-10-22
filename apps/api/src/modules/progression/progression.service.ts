@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import { levelForXp, type CompletedChallenge, type DailyChallengeView, type UnlockedAchievement } from '@playverse/shared-types';
+import { levelForXp, type CompletedChallenge, type DailyChallengeView, type UnlockedAchievement } from '@suresh/shared-types';
 import { prisma } from '../../database/prisma';
 import { evaluateAchievements } from './achievements.service';
 import { challengeForToday, challengeView, dayKey, ensureDailyChallenges, updateChallengeProgress } from './challenges.service';

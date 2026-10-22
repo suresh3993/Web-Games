@@ -7,7 +7,7 @@ import { redis } from './lib/redis';
 
 const app = createApp();
 const server = app.listen(env.port, () => {
-  logger.info(`PLAYVERSE API listening on http://localhost:${env.port} (${env.nodeEnv})`);
+  logger.info(`SURESH API listening on http://localhost:${env.port} (${env.nodeEnv})`);
   if (env.apiDocsEnabled) logger.info(`API docs: http://localhost:${env.port}/api/docs`);
 });
 

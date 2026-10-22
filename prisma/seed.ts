@@ -9,9 +9,9 @@
  */
 import { PrismaClient, type Prisma } from '@prisma/client';
 import { config } from 'dotenv';
-import { ACHIEVEMENTS, CATEGORIES, GAMES } from '@playverse/game-catalog';
-import { loadGameModule } from '@playverse/game-runtime';
-import { passwordSchema, emailSchema } from '@playverse/validation';
+import { ACHIEVEMENTS, CATEGORIES, GAMES } from '@suresh/game-catalog';
+import { loadGameModule } from '@suresh/game-runtime';
+import { passwordSchema, emailSchema } from '@suresh/validation';
 import { hashPassword } from '../apps/api/src/modules/auth/password';
 
 config({ quiet: true });
@@ -50,7 +50,7 @@ async function seedGames(categoryIds: Map<string, string>) {
       multiplayerMode: g.multiplayerMode ?? null,
       isFeatured: g.featured ?? false,
       licenseType: g.license,
-      licenseNotes: 'Original PLAYVERSE implementation; all code and artwork produced in-house.',
+      licenseNotes: 'Original SURESH implementation; all code and artwork produced in-house.',
       roadmapBatch: g.batch,
       primaryCategoryId,
     };

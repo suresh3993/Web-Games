@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { ApiSuccess, CsrfResponse, CurrentUser, MessageResponse } from '@playverse/shared-types';
-import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema, verifyEmailSchema } from '@playverse/validation';
+import type { ApiSuccess, CsrfResponse, CurrentUser, MessageResponse } from '@suresh/shared-types';
+import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema, verifyEmailSchema } from '@suresh/validation';
 import { requireAuth } from '../../middleware/auth';
 import { issueCsrfToken } from '../../middleware/csrf';
 import type { RateLimiters } from '../../middleware/rate-limit';

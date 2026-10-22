@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { XP_MIN_ROUND_MS, type AchievementCriteria } from '@playverse/shared-types';
+import { XP_MIN_ROUND_MS, type AchievementCriteria } from '@suresh/shared-types';
 
 type Db = Prisma.TransactionClient;
 

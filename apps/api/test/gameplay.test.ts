@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import type { GameSessionResult, GameSessionStart } from '@playverse/shared-types';
+import type { GameSessionResult, GameSessionStart } from '@suresh/shared-types';
 import { createClient, createUser, loginAs, prisma, resetDatabase, seedCatalog } from './helpers';
 
 type Client = ReturnType<typeof createClient>;

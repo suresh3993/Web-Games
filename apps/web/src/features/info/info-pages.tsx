@@ -27,7 +27,7 @@ function Prose({ children }: { children: ReactNode }) {
 
 const templateNote = (
   <p className="text-xs">
-    Last updated {UPDATED}. This text ships with the PLAYVERSE software and describes how it works. The operator of this site should review it for their
+    Last updated {UPDATED}. This text ships with the SURESH software and describes how it works. The operator of this site should review it for their
     jurisdiction before relying on it.
   </p>
 );
@@ -108,7 +108,7 @@ export function PrivacyPage() {
 
 export function TermsPage() {
   return (
-    <PageShell icon={FileText} title="Terms of service" description="The rules for using PLAYVERSE.">
+    <PageShell icon={FileText} title="Terms of service" description="The rules for using SURESH.">
       <Prose>
         <h2>Your account</h2>
         <p>
@@ -124,7 +124,7 @@ export function TermsPage() {
         <p>Display names and avatars must not be offensive, impersonate anyone or infringe anyone’s rights. Moderators may remove them or suspend accounts.</p>
         <h2>Our games</h2>
         <p>
-          The games on PLAYVERSE are original works made for this site. You may play them here for personal, non-commercial use. There are no purchases,
+          The games on SURESH are original works made for this site. You may play them here for personal, non-commercial use. There are no purchases,
           real-money prizes or gambling of any kind.
         </p>
         <h2>Availability</h2>

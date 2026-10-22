@@ -1,7 +1,7 @@
 import { CalendarCheck, Heart, History, LogOut, Medal, MonitorSmartphone, Settings, ShieldCheck, Trophy, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import type { CurrentUser } from '@playverse/shared-types';
+import type { CurrentUser } from '@suresh/shared-types';
 import {
   DropdownMenu,
   DropdownMenuContent,

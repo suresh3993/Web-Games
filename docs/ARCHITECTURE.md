@@ -6,7 +6,7 @@
 Browser ──► Nginx (prod) / Vite dev server ──► /api/v1 ──► Express API ──► PostgreSQL (Prisma)
    │            static SPA                                      ├──► Redis (rate limits, cache)
    │                                                            └──► SMTP (Mailpit in dev)
-   └── game modules (lazy chunks from @playverse/game-runtime) run entirely in the browser
+   └── game modules (lazy chunks from @suresh/game-runtime) run entirely in the browser
 ```
 
 - **Same origin.** In development Vite proxies `/api`; in production Nginx serves the SPA and proxies `/api`.
@@ -132,7 +132,7 @@ Implemented in `apps/api/src/modules/gameplay` (rules also listed in [API.md](AP
 - XP per finished round: `10 + min(20, floor(activeMinutes × 4))` for rounds of at least 10 s, capped at 300 XP per
   game per UTC day. Preview (staff QA) rounds earn nothing and do not count as plays.
 - Level `n` requires `100 × n × (n − 1) / 2` total XP (100 for L2, 300 for L3, 600 for L4 …). The functions live in
-  `@playverse/shared-types` so the web shows exactly what the API enforces.
+  `@suresh/shared-types` so the web shows exactly what the API enforces.
 - Score, stats, best score, XP ledger and level are written in a single database transaction.
 - Leaderboards: all-time boards read `UserGameStat.bestScore` (indexed; ties go to whoever reached it first via
   `bestScoreAt`); rolling week/day boards take each player's best unflagged score in the window. Suspended players are

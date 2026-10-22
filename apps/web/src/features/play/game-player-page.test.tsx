@@ -3,16 +3,16 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GameHost, GameModule } from '@playverse/game-runtime';
-import type { CurrentUser, GameDetail, GameSessionResult } from '@playverse/shared-types';
+import type { GameHost, GameModule } from '@suresh/game-runtime';
+import type { CurrentUser, GameDetail, GameSessionResult } from '@suresh/shared-types';
 import { resetCsrfToken } from '@/lib/api';
 import { GamePlayerPage } from './game-player-page';
 import { toSubmission } from './use-game-runner';
 
 // Replace only the module loader: the real GameController drives the fake game.
 const runtime = vi.hoisted(() => ({ host: null as GameHost | null, destroyed: 0 }));
-vi.mock('@playverse/game-runtime', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@playverse/game-runtime')>();
+vi.mock('@suresh/game-runtime', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@suresh/game-runtime')>();
   const fakeModule: GameModule = {
     manifest: {
       key: 'snake',

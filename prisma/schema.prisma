@@ -1,4 +1,4 @@
-// PLAYVERSE database schema (PostgreSQL).
+// SURESH database schema (PostgreSQL).
 // Conventions: cuid string IDs, camelCase fields mapped to snake_case tables/columns,
 // timestamps in UTC (timestamptz). Security-sensitive tokens are stored as SHA-256 hashes only.
 
@@ -220,7 +220,7 @@ model Game {
   supportedDevices  DeviceType[] @map("supported_devices")
   estimatedMinutes  Int          @map("estimated_minutes")
   engine            GameEngine
-  /// Key in @playverse/game-runtime's registry; null until a module exists.
+  /// Key in @suresh/game-runtime's registry; null until a module exists.
   runtimeKey        String?      @unique @map("runtime_key")
   /// Only for EXTERNAL_IFRAME games from verified, authorised providers.
   externalUrl       String?      @map("external_url")

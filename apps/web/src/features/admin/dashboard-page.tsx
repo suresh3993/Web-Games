@@ -1,7 +1,7 @@
 import { Activity, AlertTriangle, Database, Flag, Gamepad2, HeartPulse, Server, ShieldAlert, Users } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
-import type { AdminDashboard } from '@playverse/shared-types';
+import type { AdminDashboard } from '@suresh/shared-types';
 import { DayBarChart, RankedBars, StatCard } from '@/components/data-display';
 import { QueryError } from '@/components/query-error';
 import { Badge } from '@/components/ui/badge';

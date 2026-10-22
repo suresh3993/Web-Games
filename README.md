@@ -1,4 +1,4 @@
-# PLAYVERSE
+# SURESH
 
 A full-stack browser gaming platform: React + Vite web app, Express + Prisma API, PostgreSQL, Redis, and a
 modular game runtime with **114 original games**. See [docs/ROADMAP.md](docs/ROADMAP.md) for what is built today.
@@ -88,9 +88,9 @@ Players need an account with a verified email to launch games. Scores, XP, level
 history are recorded from then on.
 
 > macOS/Linux: identical, except `cp .env.example .env`.
-> The test database `playverse_test` is created automatically the first time the Postgres volume initialises.
+> The test database `suresh_test` is created automatically the first time the Postgres volume initialises.
 > If you created the volume before that script existed, run
-> `docker compose exec postgres psql -U playverse -c "CREATE DATABASE playverse_test;"`.
+> `docker compose exec postgres psql -U suresh -c "CREATE DATABASE suresh_test;"`.
 
 ## Common commands
 

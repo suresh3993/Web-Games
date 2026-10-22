@@ -9,8 +9,8 @@ import type {
   PaginationMeta,
   UnreadCount,
   UserProfile,
-} from '@playverse/shared-types';
-import type { ChangePasswordInput, DeleteAccountInput, UpdateProfileInput } from '@playverse/validation';
+} from '@suresh/shared-types';
+import type { ChangePasswordInput, DeleteAccountInput, UpdateProfileInput } from '@suresh/validation';
 import { meQueryKey, useCurrentUser } from '@/features/auth/api';
 import { api, apiPaginated, ApiError, apiUrl, resetCsrfToken } from '@/lib/api';
 
@@ -82,7 +82,7 @@ export async function downloadDataExport(): Promise<void> {
     const body = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
     throw new ApiError(res.status, 'INTERNAL_ERROR', body?.error?.message ?? 'The export could not be created.');
   }
-  const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? 'playverse-data.json';
+  const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? 'suresh-data.json';
   const url = URL.createObjectURL(await res.blob());
   const link = document.createElement('a');
   link.href = url;

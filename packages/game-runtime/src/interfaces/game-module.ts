@@ -1,5 +1,5 @@
 /**
- * PLAYVERSE game integration contract.
+ * SURESH game integration contract.
  *
  * Every native game is a `GameModule`: a static `manifest` plus a `create()`
  * factory. The platform (the "host") owns the DOM container, timing, persistence

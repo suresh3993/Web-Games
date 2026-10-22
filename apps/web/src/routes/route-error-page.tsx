@@ -19,7 +19,7 @@ export function RouteErrorPage() {
         title={chunkFailed ? 'A new version is available' : 'Something went wrong'}
         description={
           chunkFailed
-            ? 'PLAYVERSE was updated while you were browsing. Reload to get the latest version.'
+            ? 'SURESH was updated while you were browsing. Reload to get the latest version.'
             : 'An unexpected error occurred. Reloading usually fixes it — if not, please try again later.'
         }
         action={

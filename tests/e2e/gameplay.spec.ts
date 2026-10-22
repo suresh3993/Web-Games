@@ -29,7 +29,7 @@ async function signIn(page: Page) {
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Create account' }).click();
-    const link = await linkFromEmail(email, /verify your playverse email/i, 'verify-email');
+    const link = await linkFromEmail(email, /verify your suresh email/i, 'verify-email');
     await page.goto(new URL(link).pathname + new URL(link).search);
     await expect(page.getByRole('heading', { name: 'Email verified' })).toBeVisible();
   }

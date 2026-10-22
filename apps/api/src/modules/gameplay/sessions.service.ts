@@ -6,8 +6,8 @@ import {
   xpForRound,
   type GameSessionResult,
   type GameSessionStart,
-} from '@playverse/shared-types';
-import { MAX_ROUND_MS, type FinishGameSessionInput } from '@playverse/validation';
+} from '@suresh/shared-types';
+import { MAX_ROUND_MS, type FinishGameSessionInput } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { forbidden, HttpError, notFound } from '../../lib/http-error';
 import { logger } from '../../lib/logger';

@@ -1,4 +1,4 @@
-import type { AchievementCriteria, AchievementIcon } from '@playverse/shared-types';
+import type { AchievementCriteria, AchievementIcon } from '@suresh/shared-types';
 
 export interface AchievementDefinition {
   key: string;

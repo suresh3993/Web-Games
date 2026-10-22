@@ -12,7 +12,7 @@ import type {
   AuditLogEntry,
   PaginationMeta,
   Role,
-} from '@playverse/shared-types';
+} from '@suresh/shared-types';
 import type {
   AchievementInput,
   AchievementUpdate,
@@ -24,7 +24,7 @@ import type {
   ChallengeUpdate,
   ReportUpdateInput,
   UserStatusInput,
-} from '@playverse/validation';
+} from '@suresh/validation';
 import { api, apiPaginated } from '@/lib/api';
 
 type Query = Record<string, string | number | undefined>;

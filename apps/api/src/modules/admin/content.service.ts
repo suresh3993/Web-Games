@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { Request } from 'express';
 import { Prisma, type User } from '@prisma/client';
-import type { AchievementCriteria, AdminAchievement, AdminChallenge } from '@playverse/shared-types';
-import type { AchievementInput, AchievementUpdate, ChallengeInput, ChallengeUpdate } from '@playverse/validation';
+import type { AchievementCriteria, AdminAchievement, AdminChallenge } from '@suresh/shared-types';
+import type { AchievementInput, AchievementUpdate, ChallengeInput, ChallengeUpdate } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { HttpError, notFound } from '../../lib/http-error';
 import { audit } from '../audit/audit';

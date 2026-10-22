@@ -1,9 +1,9 @@
 {
-  "name": "@playverse/validation",
+  "name": "@suresh/validation",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Zod request schemas shared by the PLAYVERSE web forms and API validation",
+  "description": "Zod request schemas shared by the SURESH web forms and API validation",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -13,7 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@playverse/shared-types": "0.1.0",
+    "@suresh/shared-types": "0.1.0",
     "zod": "^4.1.12"
   }
 }

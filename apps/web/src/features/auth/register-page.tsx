@@ -3,7 +3,7 @@ import { MailCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router';
-import { PASSWORD_MIN_LENGTH, registerSchema } from '@playverse/validation';
+import { PASSWORD_MIN_LENGTH, registerSchema } from '@suresh/validation';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/ui/form-field';

@@ -8,8 +8,8 @@ import type {
   Leaderboard,
   MessageResponse,
   MyGameStats,
-} from '@playverse/shared-types';
-import { gameReportSchema, leaderboardQuerySchema, listGamesQuerySchema, slugSchema } from '@playverse/validation';
+} from '@suresh/shared-types';
+import { gameReportSchema, leaderboardQuerySchema, listGamesQuerySchema, slugSchema } from '@suresh/validation';
 import { requireAuth } from '../../middleware/auth';
 import type { RateLimiters } from '../../middleware/rate-limit';
 import { audit } from '../audit/audit';

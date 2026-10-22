@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import type { Prisma, ReportStatus, User } from '@prisma/client';
-import type { AdminReport, PaginationMeta } from '@playverse/shared-types';
-import type { ReportUpdateInput } from '@playverse/validation';
+import type { AdminReport, PaginationMeta } from '@suresh/shared-types';
+import type { ReportUpdateInput } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { notFound } from '../../lib/http-error';
 import { audit } from '../audit/audit';
@@ -67,7 +67,7 @@ export async function updateReport(actor: User, id: string, input: ReportUpdateI
         {
           type: 'MODERATION',
           title: `Your report about ${report.game.title} was ${outcome}`,
-          body: input.resolutionNote?.trim() || 'Thanks for helping keep PLAYVERSE in good shape.',
+          body: input.resolutionNote?.trim() || 'Thanks for helping keep SURESH in good shape.',
           link: `/games/${report.game.slug}`,
         },
       ]);

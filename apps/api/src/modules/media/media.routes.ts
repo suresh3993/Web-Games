@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { idSchema, z } from '@playverse/validation';
+import { idSchema, z } from '@suresh/validation';
 import { notFound } from '../../lib/http-error';
 import { getVariant } from './media.service';
 

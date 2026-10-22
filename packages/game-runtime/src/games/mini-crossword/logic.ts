@@ -1,6 +1,6 @@
 import { shuffle, type Rng } from '../../kit/util';
 
-/** Original clues written for PLAYVERSE. */
+/** Original clues written for SURESH. */
 export const CLUES: [string, string][] = [
   ['orbit', 'Path a moon follows'], ['piano', 'Instrument with 88 keys'], ['tiger', 'Striped big cat'], ['ocean', 'The Pacific, for one'],
   ['lemon', 'Sour yellow citrus'], ['eagle', 'Bird on many emblems'], ['robot', 'Machine helper in sci-fi'], ['pixel', 'Tiny dot on a screen'],

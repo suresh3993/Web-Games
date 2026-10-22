@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.7
-# PLAYVERSE multi-stage build.
-#   docker build --target api -t playverse-api .
-#   docker build --target web -t playverse-web .
+# SURESH multi-stage build.
+#   docker build --target api -t suresh-api .
+#   docker build --target web -t suresh-web .
 
 # ---- base ---------------------------------------------------------------------
 FROM node:22-alpine AS base

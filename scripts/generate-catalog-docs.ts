@@ -1,5 +1,5 @@
 /**
- * Regenerates docs/GAME_TRACKER.md from @playverse/game-catalog so the tracker
+ * Regenerates docs/GAME_TRACKER.md from @suresh/game-catalog so the tracker
  * can never drift from the source of truth. Run: npm run catalog:docs
  *
  * Verification columns come from the code and, when present, the latest browser
@@ -8,8 +8,8 @@
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { CATEGORIES, GAMES } from '@playverse/game-catalog';
-import { RUNTIME_KEYS } from '@playverse/game-runtime';
+import { CATEGORIES, GAMES } from '@suresh/game-catalog';
+import { RUNTIME_KEYS } from '@suresh/game-runtime';
 import { GAMES_DIR, RESULTS_DIR, RUN_FILE, SMOKE_PROJECTS, type SmokeResult, type SmokeRun } from '../tests/e2e/smoke/paths';
 
 const categoryName = new Map<string, string>(CATEGORIES.map((c) => [c.slug, c.name]));

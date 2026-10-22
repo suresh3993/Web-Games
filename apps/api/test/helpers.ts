@@ -1,7 +1,7 @@
 import { createServer, type Server } from 'node:http';
 import type { Express } from 'express';
 import request from 'supertest';
-import type { Difficulty, DeviceType, GameStatus } from '@playverse/shared-types';
+import type { Difficulty, DeviceType, GameStatus } from '@suresh/shared-types';
 import { createApp } from '../src/app';
 import { prisma } from '../src/database/prisma';
 import { invalidateCache } from '../src/lib/cache';

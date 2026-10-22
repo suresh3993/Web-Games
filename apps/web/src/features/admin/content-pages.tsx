@@ -9,8 +9,8 @@ import {
   type AdminAchievement,
   type AdminChallenge,
   type ChallengeType,
-} from '@playverse/shared-types';
-import { achievementInputSchema, challengeInputSchema, flattenZodError } from '@playverse/validation';
+} from '@suresh/shared-types';
+import { achievementInputSchema, challengeInputSchema, flattenZodError } from '@suresh/validation';
 import { AchievementIcon } from '@/components/data-display';
 import { EmptyState } from '@/components/empty-state';
 import { QueryError } from '@/components/query-error';

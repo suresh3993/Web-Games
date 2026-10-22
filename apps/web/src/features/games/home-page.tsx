@@ -131,7 +131,7 @@ export function HomePage() {
       <Hero />
       <div className="mx-auto grid max-w-7xl gap-20 px-4 sm:px-6">
         <section aria-label="Featured">
-          <SectionHeading title="Featured" description="Hand-picked highlights from the PLAYVERSE library." to="/explore" linkLabel="Browse all" />
+          <SectionHeading title="Featured" description="Hand-picked highlights from the SURESH library." to="/explore" linkLabel="Browse all" />
           {featured.isError ? (
             <QueryError error={featured.error} onRetry={() => void featured.refetch()} />
           ) : (
@@ -153,7 +153,7 @@ export function HomePage() {
           )}
         </section>
 
-        <section aria-label="Why PLAYVERSE" className="grid gap-4 md:grid-cols-3">
+        <section aria-label="Why SURESH" className="grid gap-4 md:grid-cols-3">
           {PILLARS.map(({ icon: Icon, title, text }) => (
             <div key={title} className="glass rounded-xl border border-border p-6">
               <Icon className="size-6 text-accent-text" aria-hidden="true" />

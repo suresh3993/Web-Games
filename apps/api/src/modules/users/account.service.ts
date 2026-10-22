@@ -1,7 +1,7 @@
 import type { Request } from 'express';
 import type { User } from '@prisma/client';
-import { AVATAR_MAX_BYTES, xpForLevel, type UserProfile } from '@playverse/shared-types';
-import type { ChangePasswordInput, UpdateProfileInput } from '@playverse/validation';
+import { AVATAR_MAX_BYTES, xpForLevel, type UserProfile } from '@suresh/shared-types';
+import type { ChangePasswordInput, UpdateProfileInput } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { HttpError } from '../../lib/http-error';
 import { processImage } from '../../lib/images';
@@ -136,7 +136,7 @@ export async function exportData(user: User, req: Request) {
   const slugOf = <T extends { game: { slug: string } }>({ game, ...rest }: T) => ({ game: game.slug, ...rest });
   return {
     exportedAt: new Date().toISOString(),
-    format: 'PLAYVERSE personal data export, version 1',
+    format: 'SURESH personal data export, version 1',
     account: {
       id: user.id,
       email: user.email,

@@ -1,4 +1,4 @@
-# PLAYVERSE local infrastructure.
+# SURESH local infrastructure.
 #
 #   Development (infra only):   docker compose up -d postgres redis mailpit
 #   Full containerised stack:   docker compose --profile app up -d --build
@@ -6,23 +6,23 @@
 # Host ports are deliberately non-default (5433, 6380) to avoid clashing with
 # other local Postgres/Redis instances.
 
-name: playverse
+name: suresh
 
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-playverse}
+      POSTGRES_USER: ${POSTGRES_USER:-suresh}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: ${POSTGRES_DB:-playverse}
+      POSTGRES_DB: ${POSTGRES_DB:-suresh}
     ports:
       - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-playverse} -d ${POSTGRES_DB:-playverse}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-suresh} -d ${POSTGRES_DB:-suresh}"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -56,7 +56,7 @@ services:
       target: api
     command: ["npx", "prisma", "migrate", "deploy"]
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-playverse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-playverse}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-suresh}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-suresh}?schema=public
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,7 +68,7 @@ services:
       context: .
       target: seed
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-playverse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-playverse}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-suresh}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-suresh}?schema=public
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
     depends_on:
@@ -84,7 +84,7 @@ services:
     environment:
       NODE_ENV: production
       API_PORT: 4000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-playverse}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-playverse}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-suresh}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-suresh}?schema=public
       REDIS_URL: redis://redis:6379
       CORS_ORIGINS: ${APP_URL:-http://localhost:8080}
       APP_URL: ${APP_URL:-http://localhost:8080}
@@ -96,7 +96,7 @@ services:
       SMTP_SECURE: ${SMTP_SECURE:-false}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
-      MAIL_FROM: ${MAIL_FROM:-PLAYVERSE <no-reply@playverse.local>}
+      MAIL_FROM: ${MAIL_FROM:-SURESH <no-reply@suresh.local>}
     depends_on:
       migrate:
         condition: service_completed_successfully

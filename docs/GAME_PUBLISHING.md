@@ -11,7 +11,7 @@ module + unit/contract tests ──► npm run db:seed (COMING_SOON) ──► n
 ## 1. Unit and contract tests (no browser)
 
 ```powershell
-npm test -w @playverse/game-runtime
+npm test -w @suresh/game-runtime
 ```
 
 Runs the contract test (every module through a full lifecycle with fuzzed input, cleanup and listener-leak checks),

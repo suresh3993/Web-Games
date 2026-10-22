@@ -59,7 +59,7 @@ export function SiteFooter() {
         </nav>
       </div>
       <div className="border-t border-border py-5 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} PLAYVERSE. All games and artwork are original works.
+        © {new Date().getFullYear()} SURESH. All games and artwork are original works.
       </div>
     </footer>
   );

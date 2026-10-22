@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { ApiSuccess, GlobalLeaderboardEntry } from '@playverse/shared-types';
-import { z } from '@playverse/validation';
+import type { ApiSuccess, GlobalLeaderboardEntry } from '@suresh/shared-types';
+import { z } from '@suresh/validation';
 import * as leaderboards from './leaderboards.service';
 
 const globalQuery = z.object({ limit: z.coerce.number().int().min(1).max(100).default(50) });

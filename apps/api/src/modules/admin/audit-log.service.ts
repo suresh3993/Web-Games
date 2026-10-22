@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client';
-import type { AuditLogEntry, PaginationMeta } from '@playverse/shared-types';
-import type { AuditLogQuery } from '@playverse/validation';
+import type { AuditLogEntry, PaginationMeta } from '@suresh/shared-types';
+import type { AuditLogQuery } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 
 export const auditSelect = {

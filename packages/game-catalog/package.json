@@ -1,9 +1,9 @@
 {
-  "name": "@playverse/game-catalog",
+  "name": "@suresh/game-catalog",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Source of truth for PLAYVERSE game categories and the 100+ game catalog roadmap",
+  "description": "Source of truth for SURESH game categories and the 100+ game catalog roadmap",
   "exports": {
     ".": "./src/index.ts"
   },
@@ -13,10 +13,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@playverse/shared-types": "0.1.0"
+    "@suresh/shared-types": "0.1.0"
   },
   "devDependencies": {
-    "@playverse/game-runtime": "0.1.0",
-    "@playverse/validation": "0.1.0"
+    "@suresh/game-runtime": "0.1.0",
+    "@suresh/validation": "0.1.0"
   }
 }

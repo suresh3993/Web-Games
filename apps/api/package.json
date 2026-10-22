@@ -1,9 +1,9 @@
 {
-  "name": "@playverse/api",
+  "name": "@suresh/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PLAYVERSE REST API (Express + Prisma)",
+  "description": "SURESH REST API (Express + Prisma)",
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/server.ts",
     "build": "tsup",
@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@node-rs/argon2": "^2.0.2",
-    "@playverse/shared-types": "0.1.0",
-    "@playverse/validation": "0.1.0",
+    "@suresh/shared-types": "0.1.0",
+    "@suresh/validation": "0.1.0",
     "@prisma/client": "6.19.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

@@ -1,8 +1,8 @@
 import type { Request } from 'express';
 import type { User } from '@prisma/client';
 import { Prisma } from '@prisma/client';
-import type { CurrentUser } from '@playverse/shared-types';
-import type { LoginInput, RegisterInput, ResetPasswordInput } from '@playverse/validation';
+import type { CurrentUser } from '@suresh/shared-types';
+import type { LoginInput, RegisterInput, ResetPasswordInput } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { HttpError } from '../../lib/http-error';
 import { sendMailInBackground } from '../../lib/mailer';

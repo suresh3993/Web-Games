@@ -6,8 +6,8 @@ import {
   type GameSummary,
   type PaginationMeta,
   type PublicGameStatus,
-} from '@playverse/shared-types';
-import type { ListGamesQuery } from '@playverse/validation';
+} from '@suresh/shared-types';
+import type { ListGamesQuery } from '@suresh/validation';
 import { prisma } from '../../database/prisma';
 import { cached } from '../../lib/cache';
 import { notFound } from '../../lib/http-error';

@@ -1,6 +1,6 @@
 import { Clock, Play, Sparkles } from 'lucide-react';
 import { Link } from 'react-router';
-import type { GameSummary } from '@playverse/shared-types';
+import type { GameSummary } from '@suresh/shared-types';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, titleCase } from '@/lib/utils';

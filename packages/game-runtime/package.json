@@ -1,9 +1,9 @@
 {
-  "name": "@playverse/game-runtime",
+  "name": "@suresh/game-runtime",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "PLAYVERSE browser game integration contract, lifecycle controller and native game modules",
+  "description": "SURESH browser game integration contract, lifecycle controller and native game modules",
   "exports": {
     ".": "./src/index.ts"
   },

@@ -1,9 +1,9 @@
 {
-  "name": "@playverse/shared-types",
+  "name": "@suresh/shared-types",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "API contracts shared by the PLAYVERSE web app and API",
+  "description": "API contracts shared by the SURESH web app and API",
   "exports": {
     ".": "./src/index.ts"
   },

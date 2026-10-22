@@ -56,7 +56,7 @@ JavaScript loaded on the home page: 210 KB gzipped (was 216 KB). The React frame
    render first.
 5. **Less code on the game pages.** The "Report a problem" form, and the validation library behind it, now loads only on
    the player page, and only after first paint. Before, it also loaded on every game details page. Two numeric limits
-   moved to `@playverse/shared-types`, so the game runner no longer pulls in zod.
+   moved to `@suresh/shared-types`, so the game runner no longer pulls in zod.
 
 Tried and reverted: preloading the two web fonts. On a slow connection the fonts competed with the JavaScript for
 bandwidth and delayed first paint by about 0.4 s. They use `font-display: swap`, so text never waits for them anyway.
