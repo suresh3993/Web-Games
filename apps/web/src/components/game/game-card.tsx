@@ -24,6 +24,7 @@ export function GameCard({ game, className }: { game: GameSummary; className?: s
           accentColor={game.primaryCategory.accentColor}
           icon={game.primaryCategory.icon}
           thumbnailUrl={game.thumbnailUrl}
+          thumbnailSrcSet={game.thumbnailSrcSet}
           className="transition-transform duration-500 group-hover:scale-105 motion-reduce:group-hover:scale-100"
         />
         <div className="absolute top-2 left-2">

@@ -21,10 +21,11 @@ import {
   VolumeX,
   X,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
-import { Link, useBlocker, useParams } from 'react-router';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from 'react';
+import { Link, useBlocker, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import type { CurrentUser, GameDetail, GameOutcome } from '@playverse/shared-types';
+import { AchievementIcon } from '@/components/data-display';
 import { EmptyState } from '@/components/empty-state';
 import { QueryError } from '@/components/query-error';
 import { Alert } from '@/components/ui/alert';
@@ -38,8 +39,11 @@ import { RelatedGames } from '@/features/games/game-details-page';
 import { isApiError } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useLeaderboard, useMyGameStats } from './api';
-import { FavoriteButton, LeaderboardList, ReportDialog } from './components';
+import { FavoriteButton, LeaderboardList } from './components';
 import { useGameRunner, type GameRunner, type RoundSummary } from './use-game-runner';
+
+// The report form (and the validation library behind it) loads after the page, not before it.
+const ReportDialog = lazy(() => import('./report-dialog').then((m) => ({ default: m.ReportDialog })));
 
 const OUTCOME_TITLES: Record<GameOutcome, string> = {
   won: 'You win!',
@@ -55,7 +59,7 @@ const OUTCOME_TITLES: Record<GameOutcome, string> = {
 function Gate({ icon, title, description, children }: { icon: typeof Play; title: string; description: string; children?: ReactNode }) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-      <EmptyState icon={icon} title={title} description={description} action={<div className="flex flex-wrap justify-center gap-2">{children}</div>} />
+      <EmptyState icon={icon} headingLevel={1} title={title} description={description} action={<div className="flex flex-wrap justify-center gap-2">{children}</div>} />
     </div>
   );
 }
@@ -84,6 +88,7 @@ function VerifyGate({ game }: { game: GameDetail }) {
 
 export function GamePlayerPage() {
   const { slug = '' } = useParams();
+  const [searchParams] = useSearchParams();
   const { data: user, isPending: userPending } = useCurrentUser();
   const { data: game, isPending, isError, error, refetch } = useGame(slug);
 
@@ -138,7 +143,9 @@ export function GamePlayerPage() {
   }
 
   // Keyed by slug: navigating to another game mounts a fresh player.
-  return <Player key={game.slug} game={game} runtimeKey={game.runtimeKey} user={user} preview={!game.playable} />;
+  // Staff can add ?preview=1 to play any game without scores, XP or play counts (QA).
+  const preview = !game.playable || (staff && searchParams.get('preview') === '1');
+  return <Player key={`${game.slug}:${preview}`} game={game} runtimeKey={game.runtimeKey} user={user} preview={preview} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -184,7 +191,7 @@ const shieldKeys = (event: KeyboardEvent) => {
 };
 
 function Player({ game, runtimeKey, user, preview }: { game: GameDetail; runtimeKey: string; user: CurrentUser; preview: boolean }) {
-  const runner = useGameRunner(game.slug, runtimeKey);
+  const runner = useGameRunner(game.slug, runtimeKey, { preview });
   const stageRef = useRef<HTMLDivElement>(null);
   const fullscreen = useFullscreen(stageRef);
   const [confirmRestart, setConfirmRestart] = useState(false);
@@ -225,7 +232,17 @@ function Player({ game, runtimeKey, user, preview }: { game: GameDetail; runtime
         )}
         <div className="ml-auto flex flex-wrap gap-2">
           {!preview && <FavoriteButton slug={game.slug} title={game.title} />}
-          {!preview && <ReportDialog slug={game.slug} container={dialogContainer} onOpenChange={pauseForDialog} />}
+          {!preview && (
+            <Suspense
+              fallback={
+                <Button variant="ghost" size="sm" disabled>
+                  <Flag aria-hidden="true" /> Report a problem
+                </Button>
+              }
+            >
+              <ReportDialog slug={game.slug} container={dialogContainer} onOpenChange={pauseForDialog} />
+            </Suspense>
+          )}
         </div>
       </div>
 
@@ -530,7 +547,26 @@ function RoundResult({ summary, slug, scoreLabel, onPlayAgain }: { summary: Roun
             {result.personalBest !== null && <span>Best {result.personalBest.toLocaleString()}</span>}
             {result.rank !== null && <span>Rank #{result.rank}</span>}
             <span className="font-semibold text-cyan-300">+{result.xpAwarded} XP</span>
+            {result.bonusXp > 0 && <span className="font-semibold text-amber-300">+{result.bonusXp} bonus XP</span>}
           </div>
+          {result.achievements.length > 0 && (
+            <ul className="grid gap-1" aria-label="Achievements unlocked">
+              {result.achievements.map((a) => (
+                <li key={a.key} className="flex items-center justify-center gap-2 text-sm font-semibold text-amber-300">
+                  <AchievementIcon name={a.icon} className="size-4" /> Achievement unlocked: {a.name}
+                </li>
+              ))}
+            </ul>
+          )}
+          {result.challengesCompleted.length > 0 && (
+            <ul className="grid gap-1" aria-label="Daily challenges completed">
+              {result.challengesCompleted.map((c) => (
+                <li key={c.id} className="text-sm font-semibold text-emerald-300">
+                  Daily challenge complete: {c.title}
+                </li>
+              ))}
+            </ul>
+          )}
           {result.leveledUp && (
             <p className="flex items-center gap-1 font-semibold text-amber-300">
               <Sparkles className="size-4" aria-hidden="true" /> Level up! You reached level {result.level}.

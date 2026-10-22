@@ -22,7 +22,14 @@ Status key: ✅ implemented and tested · 🟡 implemented, not automatically te
 
 - ✅ Server-side `requireAuth` / `requireRole` / `requireVerifiedEmail` guards; the role is re-read from the DB on every request
 - ✅ Role cannot be set through any public endpoint (mass-assignment test)
-- ⏳ M6: admin routes, confirmation for destructive actions, audit trail for all admin changes
+- ✅ Admin API behind `requireRole` on every route (moderator: dashboard, user moderation, reports, read-only catalog; admin: roles,
+  catalog, categories, achievements, challenges, audit log); a full player/moderator/admin access matrix is tested
+- ✅ Nobody can change their own role or status (so no self-promotion); moderators can only act on regular players; the last
+  active admin can be neither suspended, demoted nor deleted; unknown fields such as `role` are stripped from profile updates
+- ✅ Every admin change is audit-logged with the actor (suspensions with the reason); suspension revokes all sessions
+- ✅ Destructive admin actions ask for confirmation; deleting a game requires typing its slug, and the API refuses to delete
+  published games, games with history, categories in use, or achievements/challenges players already earned
+- ✅ Publishing via the admin UI requires a runtime module and a finished staff preview round of that game
 
 ## Request handling
 
@@ -38,6 +45,9 @@ Status key: ✅ implemented and tested · 🟡 implemented, not automatically te
 - ✅ Per-account rate limits for gameplay: round starts and submissions (120 per 15 min each), reports (10 per hour).
   `RATE_LIMIT_MULTIPLIER` scales only volume limits (general API and gameplay), never login/registration/token limits
 - ✅ Open-redirect protection on `?next=` after login
+- ✅ Uploads (avatars ≤ 2 MB, thumbnails ≤ 5 MB): type detected from the bytes (PNG/JPEG/WebP/GIF only, no SVG), pixel limit
+  against decompression bombs, minimum dimensions, then re-encoded server-side to WebP with metadata (EXIF/GPS) stripped;
+  only re-encoded bytes are stored and served, from immutable `nosniff` URLs under the API's `default-src 'none'` CSP
 - 🟡 Web CSP in Nginx: no inline scripts; styles allow `'unsafe-inline'` because Sonner injects a style tag
 - 🟡 Logs redact cookies, authorization, CSRF header, passwords and tokens
 
@@ -48,7 +58,8 @@ Status key: ✅ implemented and tested · 🟡 implemented, not automatically te
 - ✅ Separate test database; the test config refuses to run if it equals `DATABASE_URL`
 - ✅ Audit log for registration, login (success and failure), logout, verification, reset requests and resets,
   flagged scores (`score.flagged`), game reports (`game.reported`) and publishing (`game.published`)
-- ⏳ M5+: account deletion and personal-data export endpoints
+- ✅ Personal-data export (JSON, without password/session/token hashes) and account deletion (password re-check; personal data
+  cascades; reports and audit entries are kept but unlinked); password change revokes other sessions and emails a notice
 
 ## Games & content
 

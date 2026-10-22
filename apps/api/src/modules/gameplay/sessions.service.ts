@@ -1,7 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { Prisma, User } from '@prisma/client';
 import {
-  levelForXp,
   XP_DAILY_CAP_PER_GAME,
   XP_MIN_ROUND_MS,
   xpForRound,
@@ -10,8 +9,11 @@ import {
 } from '@playverse/shared-types';
 import { MAX_ROUND_MS, type FinishGameSessionInput } from '@playverse/validation';
 import { prisma } from '../../database/prisma';
-import { HttpError, notFound } from '../../lib/http-error';
+import { forbidden, HttpError, notFound } from '../../lib/http-error';
+import { logger } from '../../lib/logger';
 import { invalidateGameLeaderboards, rankForScore } from '../leaderboards/leaderboards.service';
+import { dayKey, ensureDailyChallenges } from '../progression/challenges.service';
+import { applyProgression, lockPlayer } from '../progression/progression.service';
 import { checkRound, type PlausibilityFlag } from './plausibility';
 
 /** Sessions without a heartbeat for this long are abandoned when the player starts another round. */
@@ -26,7 +28,7 @@ const roundClosed = (message: string) => new HttpError(409, 'CONFLICT', message)
  * Staff may also launch unpublished games in preview mode for QA: preview rounds
  * never touch scores, stats, XP, rankings or play counts.
  */
-export async function startSession(user: User, slug: string): Promise<GameSessionStart> {
+export async function startSession(user: User, slug: string, options: { preview?: boolean } = {}): Promise<GameSessionStart> {
   const game = await prisma.game.findUnique({
     where: { slug },
     select: { id: true, status: true, engine: true, runtimeKey: true, externalUrl: true },
@@ -34,7 +36,9 @@ export async function startSession(user: User, slug: string): Promise<GameSessio
   const staff = STAFF_ROLES.has(user.role);
   if (!game || (!staff && (game.status === 'DRAFT' || game.status === 'UNPUBLISHED'))) throw notFound('Game not found.');
   const launchable = game.engine === 'EXTERNAL_IFRAME' ? Boolean(game.externalUrl) : Boolean(game.runtimeKey);
-  const preview = game.status !== 'PUBLISHED';
+  if (options.preview && !staff) throw forbidden('Only moderators and administrators can start preview rounds.');
+  // Unpublished games can only be previewed; staff may also preview published ones (QA without touching real data).
+  const preview = game.status !== 'PUBLISHED' || Boolean(options.preview);
   if (!launchable || (preview && !staff)) throw notPlayable();
 
   const now = new Date();
@@ -117,10 +121,12 @@ export interface FinishOutcome {
  */
 export async function finishSession(user: User, sessionId: string, input: FinishGameSessionInput): Promise<FinishOutcome> {
   const now = new Date();
+  // Today's challenges must exist before the round can count toward them (idempotent, cached per day).
+  await ensureDailyChallenges(dayKey(now));
   const { result, gameId, flags, ranked } = await prisma.$transaction(async (tx) => {
-    // Serialise progression updates per player: XP caps, best scores and levels are
-    // read-modify-write, so concurrent submissions from one account queue here.
-    await tx.$queryRaw`SELECT id FROM users WHERE id = ${user.id} FOR UPDATE`;
+    // Serialise progression updates per player: XP caps, best scores, achievements and
+    // levels are read-modify-write, so concurrent submissions from one account queue here.
+    await lockPlayer(tx, user.id);
 
     const session = await tx.gameSession.findFirst({
       where: { id: sessionId, userId: user.id },
@@ -163,6 +169,9 @@ export async function finishSession(user: User, sessionId: string, input: Finish
       xp: account.xp,
       level: account.level,
       leveledUp: false,
+      achievements: [],
+      challengesCompleted: [],
+      bonusXp: 0,
     };
     if (session.preview) {
       return { result: { ...base, xpNote: 'Preview rounds are never scored or rewarded.' }, gameId, flags, ranked: false };
@@ -212,16 +221,16 @@ export async function finishSession(user: User, sessionId: string, input: Finish
       if (xpAwarded < full) xpNote = `You reached today's XP limit for this game (${XP_DAILY_CAP_PER_GAME} XP). Come back tomorrow!`;
     }
 
-    let { xp, level } = account;
     if (xpAwarded > 0) {
       // The unique (userId, sourceType, sourceId) key is a second guard against double rewards.
       await tx.xpTransaction.create({
         data: { userId: user.id, amount: xpAwarded, reason: 'Finished a round', sourceType: 'game_session', sourceId: session.id },
       });
-      xp += xpAwarded;
-      level = levelForXp(xp);
-      await tx.user.update({ where: { id: user.id }, data: { xp, level } });
     }
+
+    // Daily challenges, achievements and the level, written together with the round.
+    // Flagged rounds don't count, so there is nothing to re-evaluate for them.
+    const progression = flagged ? null : await applyProgression(tx, { id: user.id, xp: account.xp + xpAwarded, level: account.level }, now);
 
     const result: GameSessionResult = {
       ...base,
@@ -230,16 +239,23 @@ export async function finishSession(user: User, sessionId: string, input: Finish
       isPersonalBest: improves && (previousBest !== null || input.score > 0),
       xpAwarded,
       xpNote,
-      xp,
-      level,
-      leveledUp: level > account.level,
+      xp: progression?.xp ?? account.xp,
+      level: progression?.level ?? account.level,
+      leveledUp: progression?.leveledUp ?? false,
+      achievements: progression?.achievements ?? [],
+      challengesCompleted: progression?.challengesCompleted ?? [],
+      bonusXp: progression?.bonusXp ?? 0,
     };
     return { result, gameId, flags, ranked };
-  });
+  }, { timeout: 15_000 });
 
+  // The round is committed at this point: extras below must never turn it into an error response.
   if (ranked) {
     if (result.score > 0) await invalidateGameLeaderboards(gameId);
-    result.rank = await rankForScore(gameId, result.personalBest);
+    result.rank = await rankForScore(gameId, result.personalBest).catch((err: unknown) => {
+      logger.warn({ err, gameId }, 'rank lookup failed after a saved round');
+      return null;
+    });
   }
   return { result, gameId, flags };
 }

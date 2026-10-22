@@ -12,11 +12,14 @@ import { loadSession } from './middleware/auth';
 import { csrfProtection } from './middleware/csrf';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { createRateLimiters } from './middleware/rate-limit';
+import { adminRouter } from './modules/admin/admin.routes';
 import { authRouter } from './modules/auth/auth.routes';
 import { gameplayRouter } from './modules/gameplay/gameplay.routes';
 import { gamesRouter } from './modules/games/games.routes';
 import { healthRouter } from './modules/health/health.routes';
 import { leaderboardsRouter } from './modules/leaderboards/leaderboards.routes';
+import { mediaRouter } from './modules/media/media.routes';
+import { achievementsRouter, challengesRouter, notificationsRouter } from './modules/progression/progression.routes';
 import { usersRouter } from './modules/users/users.routes';
 
 export function createApp(): Express {
@@ -55,6 +58,9 @@ export function createApp(): Express {
   app.use(express.json({ limit: '100kb' }));
   app.use(cookieParser());
 
+  // Uploaded images: public, immutable and browser-cached; a separate, larger budget than the API.
+  app.use('/api/v1/media', limits.media, mediaRouter());
+
   const v1 = Router();
   v1.use(limits.api);
   v1.use(loadSession);
@@ -64,7 +70,11 @@ export function createApp(): Express {
   v1.use('/games', gamesRouter(limits));
   v1.use('/game-sessions', gameplayRouter(limits));
   v1.use('/leaderboards', leaderboardsRouter());
-  v1.use('/users', usersRouter());
+  v1.use('/users', usersRouter(limits));
+  v1.use('/achievements', achievementsRouter());
+  v1.use('/challenges', challengesRouter(limits));
+  v1.use('/notifications', notificationsRouter());
+  v1.use('/admin', adminRouter(limits));
 
   app.use('/api/v1', v1);
 

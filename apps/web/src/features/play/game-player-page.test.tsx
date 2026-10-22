@@ -71,6 +71,7 @@ const baseGame: GameDetail = {
   title: 'Snake',
   shortDescription: 'Eat and grow.',
   thumbnailUrl: null,
+  thumbnailSrcSet: null,
   difficulty: 'EASY',
   supportedDevices: ['DESKTOP', 'MOBILE'],
   estimatedMinutes: 5,
@@ -106,6 +107,9 @@ const result: GameSessionResult = {
   xp: 58,
   level: 1,
   leveledUp: false,
+  achievements: [{ key: 'first-round', name: 'First Steps', icon: 'Gamepad2', xpReward: 25 }],
+  challengesCompleted: [],
+  bonusXp: 25,
 };
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -116,8 +120,8 @@ function serve({ user = baseUser as CurrentUser | null, game = baseGame, preview
     const url = new URL(String(input), 'http://localhost');
     const route = `${init?.method ?? 'GET'} ${url.pathname}`;
     switch (route) {
-      case 'GET /api/v1/auth/me':
-        return user ? json(200, { data: user }) : json(401, { error: { code: 'UNAUTHENTICATED', message: 'no' } });
+      case 'GET /api/v1/auth/session':
+        return json(200, { data: user });
       case 'GET /api/v1/auth/csrf':
         return json(200, { data: { csrfToken: 'csrf' } });
       case 'GET /api/v1/games/snake':
@@ -141,14 +145,14 @@ function serve({ user = baseUser as CurrentUser | null, game = baseGame, preview
 /** The big Play button on the start overlay (the toolbar has one too). */
 const overlayPlay = async () => within(await screen.findByRole('region', { name: 'Start' }, { timeout: 3000 })).getByRole('button', { name: 'Play' });
 
-function renderPlayer() {
+function renderPlayer(path = '/games/snake/play') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const router = createMemoryRouter(
     [
       { path: '/games/:slug/play', element: <GamePlayerPage /> },
       { path: '*', element: <p>Elsewhere</p> },
     ],
-    { initialEntries: ['/games/snake/play'] },
+    { initialEntries: [path] },
   );
   render(
     <QueryClientProvider client={queryClient}>
@@ -215,6 +219,8 @@ describe('GamePlayerPage round flow', () => {
     expect(summary).toHaveTextContent('New personal best!');
     expect(summary).toHaveTextContent('Rank #3');
     expect(summary).toHaveTextContent('+18 XP');
+    expect(summary).toHaveTextContent('+25 bonus XP');
+    expect(summary).toHaveTextContent('Achievement unlocked: First Steps');
 
     const finishes = calls().filter((c) => c.url.endsWith('/finish'));
     expect(finishes).toHaveLength(1);
@@ -231,6 +237,26 @@ describe('GamePlayerPage round flow', () => {
     await waitFor(() => expect(screen.getByTestId('game-stage')).toHaveAttribute('data-phase', 'running'));
     await user.click(screen.getByRole('button', { name: 'End round' }));
     expect(await screen.findByTestId('round-result')).toHaveTextContent('Preview round: nothing was saved.');
+  });
+
+  it('lets staff preview a published game with ?preview=1 (players cannot)', async () => {
+    serve({ user: { ...baseUser, role: 'ADMIN' }, preview: true });
+    const user = userEvent.setup();
+    renderPlayer('/games/snake/play?preview=1');
+    expect(await screen.findByText('Preview mode: scores are not saved')).toBeInTheDocument();
+    await user.click(await overlayPlay());
+    await waitFor(() => expect(screen.getByTestId('game-stage')).toHaveAttribute('data-phase', 'running'));
+    expect(calls().find((c) => c.url.endsWith('/game-sessions'))?.body).toEqual({ slug: 'snake', preview: true });
+  });
+
+  it('ignores ?preview=1 for regular players', async () => {
+    serve();
+    const user = userEvent.setup();
+    renderPlayer('/games/snake/play?preview=1');
+    await user.click(await overlayPlay());
+    await waitFor(() => expect(screen.getByTestId('game-stage')).toHaveAttribute('data-phase', 'running'));
+    expect(screen.queryByText('Preview mode: scores are not saved')).not.toBeInTheDocument();
+    expect(calls().find((c) => c.url.endsWith('/game-sessions'))?.body).toEqual({ slug: 'snake' });
   });
 
   it('ends and submits an unfinished round when the player leaves the page', async () => {

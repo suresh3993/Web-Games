@@ -6,9 +6,12 @@ import { Button } from '@/components/ui/button';
 export function NotFoundPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6">
-      <p className="mb-4 text-center font-display text-7xl font-bold text-gradient">404</p>
+      <p className="mb-4 text-center font-display text-7xl font-bold text-gradient" aria-hidden="true">
+        404
+      </p>
       <EmptyState
         icon={Ghost}
+        headingLevel={1}
         title="This level doesn’t exist"
         description="The page you’re looking for was moved, removed or never spawned."
         action={

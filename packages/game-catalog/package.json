@@ -16,6 +16,7 @@
     "@playverse/shared-types": "0.1.0"
   },
   "devDependencies": {
-    "@playverse/game-runtime": "0.1.0"
+    "@playverse/game-runtime": "0.1.0",
+    "@playverse/validation": "0.1.0"
   }
 }

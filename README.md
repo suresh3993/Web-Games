@@ -4,11 +4,13 @@ A full-stack browser gaming platform: React + Vite web app, Express + Prisma API
 modular game runtime with **114 original games**. See [docs/ROADMAP.md](docs/ROADMAP.md) for what is built today.
 
 > **Current state.** All 114 games are implemented (original TypeScript, no third-party game code or assets), unit-
-> and contract-tested, and launched end-to-end in a real browser by an automated smoke test. Accounts, the catalog,
-> the game player, scores, XP and levels, per-game and global leaderboards, favourites and play history work.
+> and contract-tested, and launched end-to-end in a real browser by an automated smoke test. Every page in the spec
+> exists: accounts and profiles (avatars, settings, data export, account deletion), the game player, scores, XP and
+> levels, achievements, daily challenges, notifications, leaderboards, favourites, history, help and legal pages, and
+> a role-based admin area (dashboard, users, games, categories, reports and analytics, achievements, challenges, audit log).
 > **A game becomes playable on your instance only after it is published**: seeding creates every game as
 > *Coming soon*, and `npm run games:publish` publishes exactly the games that passed the smoke test
-> ([how](docs/GAME_PUBLISHING.md)). Achievements, daily challenges, profiles and the admin UI are still to come.
+> ([how](docs/GAME_PUBLISHING.md)).
 
 ## Repository layout
 
@@ -25,7 +27,7 @@ prisma/           schema.prisma, versioned migrations, idempotent seed
 tests/e2e/        Playwright end-to-end tests (real stack + Mailpit); tests/e2e/smoke launches every game
 scripts/          Catalog docs generator, smoke-verified game publisher
 docker/           Postgres init script, Nginx config
-docs/             Architecture, API, security checklist, roadmap, deployment, game tracker, publishing
+docs/             Architecture, API, security, accessibility, performance, roadmap, deployment, game tracker, publishing
 ```
 
 ## Prerequisites
@@ -61,7 +63,9 @@ Then open **<http://localhost:5173>**. Emails (verification, password reset) are
 **<http://localhost:8025>**. API documentation (Swagger UI) is at **<http://localhost:4000/api/docs>**.
 
 Optional admin account: set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` in `.env`, then re-run `npm run db:seed`.
-No default administrator is ever created.
+No default administrator is ever created. Admins open the admin area from the account menu (**Admin dashboard**) or at
+`/admin`; they can promote other accounts to moderator or admin there. The help page shows a contact address when
+`VITE_SUPPORT_EMAIL` is set at build time.
 
 ### Make the games playable
 
@@ -94,7 +98,8 @@ history are recorded from then on.
 |---|---|
 | `npm run dev` | API + web with hot reload |
 | `npm test` | All unit + integration tests (API tests need Postgres running) |
-| `npm run test:e2e` | Playwright user flows, desktop + mobile (first run: `npx playwright install chromium`) |
+| `npm run test:e2e` | Playwright user flows and the accessibility audit, desktop + mobile (first run: `npx playwright install chromium`) |
+| `npx playwright test tests/e2e/perf.spec.ts --project=desktop-chromium --workers=1` | Core Web Vitals budget on a throttled phone (set `E2E_PERF=1` and `E2E_WEB_MODE=preview`; idle machine) |
 | `npm run test:e2e:games` | Launch-flow smoke test of every game (needs a staff account, see above) |
 | `npm run games:publish` | Publish the games that passed the latest smoke test (`-- --dry-run` to preview) |
 | `npm run typecheck` | TypeScript across all workspaces and E2E specs |
@@ -109,6 +114,8 @@ history are recorded from then on.
 - [Architecture & game integration contract](docs/ARCHITECTURE.md)
 - [API reference](docs/API.md) (live OpenAPI: `/api/docs`)
 - [Security checklist](docs/SECURITY.md)
+- [Accessibility audit](docs/ACCESSIBILITY.md)
+- [Performance measurements](docs/PERFORMANCE.md)
 - [Roadmap & milestone status](docs/ROADMAP.md)
 - [Deployment & rollback](docs/DEPLOYMENT.md)
 - [Game implementation & licensing tracker](docs/GAME_TRACKER.md)

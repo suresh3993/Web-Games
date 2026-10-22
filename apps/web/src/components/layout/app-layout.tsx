@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { m } from 'framer-motion';
+import { useEffect, useRef } from 'react';
 import { Outlet, ScrollRestoration, useLocation } from 'react-router';
 import { VerificationBanner } from '@/features/auth/verification-banner';
 import { SiteFooter } from './site-footer';
@@ -7,6 +7,8 @@ import { SiteHeader } from './site-header';
 
 export function AppLayout() {
   const location = useLocation();
+  const firstPathname = useRef(location.pathname);
+  const firstPage = location.pathname === firstPathname.current;
 
   // Move focus to the main region after navigation so screen-reader users hear the new page.
   useEffect(() => {
@@ -23,17 +25,18 @@ export function AppLayout() {
       </a>
       <SiteHeader />
       <VerificationBanner />
-      <motion.main
+      <m.main
         id="main"
         tabIndex={-1}
         key={location.pathname}
-        initial={{ opacity: 0, y: 8 }}
+        // No fade on the first page load: content hidden at opacity 0 delays first paint (LCP).
+        initial={firstPage ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="flex-1 outline-none"
       >
         <Outlet />
-      </motion.main>
+      </m.main>
       <SiteFooter />
       <ScrollRestoration />
     </div>

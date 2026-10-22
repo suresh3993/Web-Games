@@ -3,7 +3,7 @@
 // timestamps in UTC (timestamptz). Security-sensitive tokens are stored as SHA-256 hashes only.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // native = developer machine; linux-musl = Alpine Docker image
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
@@ -114,7 +114,9 @@ model User {
   /// Argon2id PHC string. Never returned by the API.
   passwordHash    String        @map("password_hash")
   displayName     String        @map("display_name") @db.VarChar(32)
+  /// Public URL of the current avatar variant (derived from `avatarImageId`).
   avatarUrl       String?       @map("avatar_url")
+  avatarImageId   String?       @unique @map("avatar_image_id")
   role            Role          @default(USER)
   status          AccountStatus @default(ACTIVE)
   xp              Int           @default(0)
@@ -136,10 +138,14 @@ model User {
   reports           GameReport[]            @relation("ReportReporter")
   resolvedReports   GameReport[]            @relation("ReportResolver")
   auditLogs         AuditLog[]
+  avatarImage       MediaImage?             @relation("UserAvatar", fields: [avatarImageId], references: [id], onDelete: SetNull)
+  uploads           MediaImage[]            @relation("MediaUploads")
 
   @@index([role])
   @@index([status])
   @@index([xp(sort: Desc)])
+  @@index([createdAt])
+  @@index([lastLoginAt])
   @@map("users")
 }
 
@@ -207,7 +213,9 @@ model Game {
   shortDescription  String       @map("short_description") @db.VarChar(280)
   description       String
   instructions      String
+  /// URL of the default thumbnail variant (derived from `thumbnailImageId`).
   thumbnailUrl      String?      @map("thumbnail_url")
+  thumbnailImageId  String?      @unique @map("thumbnail_image_id")
   difficulty        Difficulty
   supportedDevices  DeviceType[] @map("supported_devices")
   estimatedMinutes  Int          @map("estimated_minutes")
@@ -242,6 +250,7 @@ model Game {
   achievements    Achievement[]
   challenges      DailyChallenge[]
   reports         GameReport[]
+  thumbnailImage  MediaImage?        @relation("GameThumbnail", fields: [thumbnailImageId], references: [id], onDelete: SetNull)
 
   @@index([status, playCount(sort: Desc)])
   @@index([status, createdAt(sort: Desc)])
@@ -287,7 +296,9 @@ model GameSession {
   score GameScore?
 
   @@index([userId, startedAt(sort: Desc)])
+  @@index([userId, endedAt])
   @@index([gameId, startedAt(sort: Desc)])
+  @@index([startedAt])
   @@index([status, lastHeartbeatAt])
   @@map("game_sessions")
 }
@@ -317,8 +328,8 @@ model GameScore {
 
 /// Per-user, per-game aggregate: personal best, play count, recently played.
 model UserGameStat {
-  userId       String   @map("user_id")
-  gameId       String   @map("game_id")
+  userId       String    @map("user_id")
+  gameId       String    @map("game_id")
   /// Best unflagged score; flagged rounds never count.
   bestScore    Int?      @map("best_score")
   /// When `bestScore` was first reached (leaderboard tie-break: earlier wins).
@@ -385,6 +396,7 @@ model UserAchievement {
 
   @@id([userId, achievementId])
   @@index([userId, unlockedAt(sort: Desc)])
+  @@index([achievementId])
   @@map("user_achievements")
 }
 
@@ -421,6 +433,7 @@ model UserChallengeProgress {
   challenge DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
   @@id([userId, challengeId])
+  @@index([challengeId])
   @@map("user_challenge_progress")
 }
 
@@ -499,5 +512,41 @@ model AuditLog {
   @@index([actorId, createdAt(sort: Desc)])
   @@index([action, createdAt(sort: Desc)])
   @@index([targetType, targetId])
+  @@index([createdAt(sort: Desc)])
   @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Uploaded media
+// ---------------------------------------------------------------------------
+
+/// An uploaded image. Uploads are decoded and re-encoded server-side (WebP, metadata
+/// stripped) into fixed widths, so the stored bytes never come straight from a client.
+model MediaImage {
+  id           String   @id @default(cuid())
+  /// "avatar" | "game-thumbnail"
+  kind         String   @db.VarChar(32)
+  uploadedById String?  @map("uploaded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  uploadedBy User?          @relation("MediaUploads", fields: [uploadedById], references: [id], onDelete: SetNull)
+  variants   MediaVariant[]
+  avatarOf   User?          @relation("UserAvatar")
+  thumbOf    Game?          @relation("GameThumbnail")
+
+  @@index([uploadedById])
+  @@map("media_images")
+}
+
+model MediaVariant {
+  imageId String @map("image_id")
+  width   Int
+  height  Int
+  /// WebP bytes.
+  data    Bytes
+
+  image MediaImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@id([imageId, width])
+  @@map("media_variants")
 }

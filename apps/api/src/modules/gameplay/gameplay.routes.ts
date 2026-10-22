@@ -13,8 +13,8 @@ export function gameplayRouter(limits: RateLimiters): Router {
 
   // Launching a game requires a logged-in, verified account (checked here, not just in the UI).
   router.post('/', requireAuth, requireVerifiedEmail, limits.gameStart, async (req, res) => {
-    const { slug } = startGameSessionSchema.parse(req.body);
-    const body: ApiSuccess<GameSessionStart> = { data: await sessions.startSession(req.auth!.user, slug) };
+    const { slug, preview } = startGameSessionSchema.parse(req.body);
+    const body: ApiSuccess<GameSessionStart> = { data: await sessions.startSession(req.auth!.user, slug, { preview }) };
     res.status(201).set('Cache-Control', 'no-store').json(body);
   });
 

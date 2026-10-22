@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { ArrowRight, Gamepad2, Layers, ShieldCheck, Smartphone, Sparkles } from 'lucide-react';
 import { Link } from 'react-router';
 import { GameGrid } from '@/components/game/game-card';
@@ -57,7 +57,8 @@ function Hero() {
     <section className="relative overflow-hidden">
       <div className="bg-grid absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]" aria-hidden="true" />
       <div className="relative mx-auto max-w-7xl px-4 pt-16 pb-12 sm:px-6 sm:pt-24">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        {/* Slide only: starting at opacity 0 would hide the hero (the LCP element) until the animation runs. */}
+        <m.div initial={{ y: 16 }} animate={{ y: 0 }} transition={{ duration: 0.5 }}>
           <p className="glass inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
             <Sparkles className="size-3.5 text-accent-text" aria-hidden="true" />
             100+ original games on the roadmap — new ones every release
@@ -82,7 +83,7 @@ function Hero() {
             )}
           </div>
           <CatalogStats />
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );

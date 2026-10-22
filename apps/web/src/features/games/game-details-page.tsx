@@ -186,6 +186,7 @@ export function GameDetailsPage() {
                 accentColor={game.primaryCategory.accentColor}
                 icon={game.primaryCategory.icon}
                 thumbnailUrl={game.thumbnailUrl}
+          thumbnailSrcSet={game.thumbnailSrcSet}
               />
             </div>
             <div className="grid content-start gap-5">

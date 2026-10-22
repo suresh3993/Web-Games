@@ -48,7 +48,8 @@
   --accent-foreground: #07101f;
   --accent-text: #22d3ee;
   --destructive: #f43f5e;
-  --destructive-foreground: #ffffff;
+  /* Dark text: white on this rose is only 3.7:1; this is 5.3:1 (WCAG AA). */
+  --destructive-foreground: #070a17;
   --success: #4ade80;
   --warning: #fbbf24;
   --glow: rgb(124 92 255 / 0.35);

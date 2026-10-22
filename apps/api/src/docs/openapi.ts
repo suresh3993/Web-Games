@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { accountAndAdminPaths } from './openapi-account-admin';
 import {
   DEVICE_TYPES,
   DIFFICULTIES,
@@ -56,7 +57,7 @@ export const openApiDocument = {
       'All state-changing requests require the `X-CSRF-Token` header obtained from `GET /auth/csrf`.',
   },
   servers: [{ url: '/api/v1' }],
-  tags: [{ name: 'Auth' }, { name: 'Games' }, { name: 'Gameplay' }, { name: 'Players' }, { name: 'System' }],
+  tags: ['Auth', 'Account', 'Games', 'Gameplay', 'Players', 'Progression', 'Notifications', 'Media', 'Admin', 'System'].map((name) => ({ name })),
   components: {
     securitySchemes: {
       sessionCookie: { type: 'apiKey', in: 'cookie', name: 'pv_session', description: '`__Host-pv_session` when served over HTTPS' },
@@ -290,6 +291,13 @@ export const openApiDocument = {
         responses: { 200: json(dataOf(ref('CurrentUser'))), 401: error('Not logged in') },
       },
     },
+    '/auth/session': {
+      get: {
+        tags: ['Auth'],
+        summary: 'Session probe: the current user, or null for guests (never 401)',
+        responses: { 200: json(dataOf({ oneOf: [ref('CurrentUser'), { type: 'null' }] })) },
+      },
+    },
     '/games': {
       get: {
         tags: ['Games'],
@@ -466,5 +474,6 @@ export const openApiDocument = {
         responses: { 200: json(dataOf({ type: 'array', items: { type: 'object' } })) },
       },
     },
+    ...accountAndAdminPaths,
   },
-} as const;
+};

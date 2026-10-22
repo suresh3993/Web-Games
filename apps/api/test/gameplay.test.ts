@@ -14,6 +14,11 @@ beforeEach(async () => {
     { slug: 'published-no-runtime', category: 'arcade', status: 'PUBLISHED' },
     { slug: 'secret-draft', category: 'arcade', status: 'DRAFT', runtimeKey: 'secret-draft' },
   ]);
+  // Round-XP tests: give today one unreachable challenge so no automatic daily challenge
+  // (and its bonus XP) interferes. Challenges have their own suite.
+  await prisma.dailyChallenge.create({
+    data: { date: new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`), key: 'test-placeholder', title: 'Placeholder', description: 'Not reachable in tests.', type: 'PLAY_MINUTES', target: 100_000, xpReward: 0 },
+  });
 });
 afterAll(() => prisma.$disconnect());
 
@@ -107,6 +112,23 @@ describe('POST /game-sessions (launch)', () => {
     expect((await prisma.game.findUniqueOrThrow({ where: { slug: 'sudoku' } })).playCount).toBe(0);
     // Drafts are previewable by staff too.
     expect((await start(client, 'secret-draft')).preview).toBe(true);
+  });
+
+  it('lets staff preview published games without touching real data, but not players', async () => {
+    const { client: staff } = await player({ role: 'ADMIN' });
+    const session = await start(staff, 'snake');
+    expect(session.preview).toBe(false);
+    const res = await staff.post('/api/v1/game-sessions', { slug: 'snake', preview: true });
+    expect(res.status).toBe(201);
+    expect(res.body.data).toMatchObject({ preview: true, personalBest: null });
+    await backdate(res.body.data.id, 3 * MINUTE);
+    const done = await finish(staff, res.body.data.id, { score: 500, outcome: 'won', durationMs: 2 * MINUTE });
+    expect(done.body.data).toMatchObject({ preview: true, xpAwarded: 0 });
+    expect(await prisma.gameScore.count()).toBe(0);
+    expect((await prisma.game.findUniqueOrThrow({ where: { slug: 'snake' } })).playCount).toBe(1); // only the normal round
+
+    const { client: regular } = await player();
+    expect((await regular.post('/api/v1/game-sessions', { slug: 'snake', preview: true })).status).toBe(403);
   });
 
   it('abandons stale rounds when a new one starts', async () => {

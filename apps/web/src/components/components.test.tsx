@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GameSummary } from '@playverse/shared-types';
+import { LeaderboardList } from '@/features/play/components';
 import { GameCard } from './game/game-card';
 import { FormField } from './ui/form-field';
 
@@ -12,6 +13,7 @@ const game: GameSummary = {
   title: 'Snake',
   shortDescription: 'Eat orbs and grow.',
   thumbnailUrl: null,
+  thumbnailSrcSet: null,
   difficulty: 'EASY',
   supportedDevices: ['DESKTOP', 'MOBILE'],
   estimatedMinutes: 5,
@@ -65,5 +67,16 @@ describe('FormField', () => {
     expect(input).toHaveAttribute('type', 'text');
     await user.click(screen.getByRole('button', { name: 'Hide password' }));
     expect(input).toHaveAttribute('type', 'password');
+  });
+});
+
+describe('LeaderboardList', () => {
+  it('renders players who share a name and a rank (ties) without key collisions', () => {
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const entry = { rank: 1, displayName: 'Achiever', avatarUrl: null, level: 2, score: 100, achievedAt: '2026-10-21T00:00:00.000Z', isYou: false };
+    render(<LeaderboardList entries={[entry, { ...entry }, { ...entry, rank: 3, score: 50 }]} />);
+    expect(screen.getAllByText('Achiever')).toHaveLength(3);
+    expect(errors.mock.calls.flat().join(' ')).not.toMatch(/same key/);
+    errors.mockRestore();
   });
 });

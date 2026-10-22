@@ -1,51 +1,14 @@
-import { Clock, Crown, Gamepad2, Heart, History, LogIn, Medal, Trophy } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Clock, Crown, Gamepad2, Heart, History, Medal, Trophy } from 'lucide-react';
+import { Link } from 'react-router';
 import { EmptyState } from '@/components/empty-state';
 import { GameArt } from '@/components/game/game-art';
 import { GameGrid } from '@/components/game/game-card';
 import { QueryError } from '@/components/query-error';
 import { Button } from '@/components/ui/button';
+import { PageShell, RequireAccount } from '@/components/page-shell';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCurrentUser } from '@/features/auth/api';
 import { useFavorites, useGlobalLeaderboard, usePlayHistory } from '@/features/play/api';
 import { cn, formatPlayTime, formatRelative } from '@/lib/utils';
-
-function PageShell({ icon: Icon, title, description, children }: { icon: typeof Heart; title: string; description: string; children: ReactNode }) {
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <header className="mb-8">
-        <h1 className="flex items-center gap-3 text-3xl font-bold sm:text-4xl">
-          <Icon className="size-8 text-primary-text" aria-hidden="true" /> {title}
-        </h1>
-        <p className="mt-2 text-muted-foreground">{description}</p>
-      </header>
-      {children}
-    </div>
-  );
-}
-
-/** Personal pages need an account; the API enforces this, the page explains it. */
-function RequireAccount({ children }: { children: ReactNode }) {
-  const { data: user, isPending } = useCurrentUser();
-  const location = useLocation();
-  if (isPending) return <Skeleton className="h-48 w-full rounded-xl" />;
-  if (!user) {
-    return (
-      <EmptyState
-        icon={LogIn}
-        title="Log in to see this page"
-        description="Your favourites, history and stats are tied to your account."
-        action={
-          <Button asChild>
-            <Link to={`/login?next=${encodeURIComponent(location.pathname)}`}>Log in</Link>
-          </Button>
-        }
-      />
-    );
-  }
-  return children;
-}
 
 const browseAction = (
   <Button asChild>
@@ -65,9 +28,7 @@ function FavoritesList() {
 export function FavoritesPage() {
   return (
     <PageShell icon={Heart} title="Favourites" description="Games you’ve saved for later.">
-      <RequireAccount>
-        <FavoritesList />
-      </RequireAccount>
+      <RequireAccount>{() => <FavoritesList />}</RequireAccount>
     </PageShell>
   );
 }
@@ -98,6 +59,7 @@ function HistoryList() {
               accentColor={entry.game.primaryCategory.accentColor}
               icon={entry.game.primaryCategory.icon}
               thumbnailUrl={entry.game.thumbnailUrl}
+          thumbnailSrcSet={entry.game.thumbnailSrcSet}
             />
           </Link>
           <div className="min-w-0 flex-1">
@@ -132,9 +94,7 @@ function HistoryList() {
 export function RecentlyPlayedPage() {
   return (
     <PageShell icon={History} title="Recently played" description="Your games, newest first, with personal bests.">
-      <RequireAccount>
-        <HistoryList />
-      </RequireAccount>
+      <RequireAccount>{() => <HistoryList />}</RequireAccount>
     </PageShell>
   );
 }
@@ -154,10 +114,11 @@ function GlobalBoard() {
   }
   return (
     <ol className="glass divide-y divide-border overflow-hidden rounded-xl border border-border" aria-label="Players by XP">
-      {data.map((entry) => {
+      {data.map((entry, position) => {
         const podium = PODIUM[entry.rank - 1];
         return (
-          <li key={`${entry.rank}-${entry.displayName}`} className={cn('flex items-center gap-4 px-4 py-3', entry.isYou && 'bg-primary/15')}>
+          // Names aren't unique and ties share a rank, so key by position in this static, ordered list.
+          <li key={position} className={cn('flex items-center gap-4 px-4 py-3', entry.isYou && 'bg-primary/15')}>
             <span className="flex w-10 justify-center font-display text-lg font-bold tabular-nums">
               {podium ? <podium.icon className={cn('size-5', podium.className)} aria-label={`Rank ${entry.rank}`} /> : `#${entry.rank}`}
             </span>

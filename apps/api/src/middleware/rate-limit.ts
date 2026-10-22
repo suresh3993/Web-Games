@@ -100,6 +100,8 @@ export function createRateLimiters(scale = env.rateLimitMultiplier) {
   return {
     /** Broad per-IP ceiling for the whole API. */
     api: limiter('api', { windowMs: 15 * 60_000, limit: 1000 * scale }),
+    /** Image downloads per IP (cheap, immutable, browser-cached). */
+    media: limiter('media', { windowMs: 15 * 60_000, limit: 5000 * scale }),
     /** Per-IP login attempts. */
     loginIp: limiter('login-ip', { windowMs: 15 * 60_000, limit: 30 }),
     /** Failed logins per account across all IPs (slows credential stuffing on one account). */
@@ -120,6 +122,14 @@ export function createRateLimiters(scale = env.rateLimitMultiplier) {
     scoreSubmit: limiter('score-submit', { windowMs: 15 * 60_000, limit: 120 * scale, keyGenerator: userKey }),
     /** Game problem reports per account. */
     reports: limiter('reports', { windowMs: 60 * 60_000, limit: 10, keyGenerator: userKey }),
+    /** Profile, avatar and other account edits per account. */
+    accountChanges: limiter('account-changes', { windowMs: 60 * 60_000, limit: 30, keyGenerator: userKey }),
+    /** Endpoints that check the current password (change password, delete account): slows guessing. */
+    passwordConfirm: limiter('password-confirm', { windowMs: 15 * 60_000, limit: 10, keyGenerator: userKey }),
+    /** Personal-data exports per account (each is a large read). */
+    dataExport: limiter('data-export', { windowMs: 60 * 60_000, limit: 5, keyGenerator: userKey }),
+    /** Staff uploads and catalog edits per account. */
+    adminWrites: limiter('admin-writes', { windowMs: 15 * 60_000, limit: 300, keyGenerator: userKey }),
   };
 }
 

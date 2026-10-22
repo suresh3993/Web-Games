@@ -7,6 +7,7 @@ import { prisma } from '../src/database/prisma';
 import { invalidateCache } from '../src/lib/cache';
 import { flushMail, outbox } from '../src/lib/mailer';
 import { hashPassword } from '../src/modules/auth/password';
+import { resetEnsuredDays } from '../src/modules/progression/challenges.service';
 
 export { prisma, outbox };
 
@@ -19,6 +20,7 @@ export async function resetDatabase() {
   }
   outbox.length = 0;
   await invalidateCache('');
+  resetEnsuredDays();
 }
 
 const openServers = new Set<Server>();
@@ -71,9 +73,14 @@ export function createClient(app: Express = createApp()) {
       const token = await csrf();
       return agent.patch(url).set('X-CSRF-Token', token).send(body ?? {});
     },
-    del: async (url: string) => {
+    del: async (url: string, body?: object) => {
       const token = await csrf();
-      return agent.delete(url).set('X-CSRF-Token', token);
+      return agent.delete(url).set('X-CSRF-Token', token).send(body ?? {});
+    },
+    /** Raw-body upload (the API detects the real type from the bytes). */
+    upload: async (url: string, bytes: Buffer, contentType = 'application/octet-stream') => {
+      const token = await csrf();
+      return agent.put(url).set('X-CSRF-Token', token).set('Content-Type', contentType).send(bytes);
     },
   };
 }

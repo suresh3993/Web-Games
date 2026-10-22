@@ -137,3 +137,38 @@ Implemented in `apps/api/src/modules/gameplay` (rules also listed in [API.md](AP
 - Leaderboards: all-time boards read `UserGameStat.bestScore` (indexed; ties go to whoever reached it first via
   `bestScoreAt`); rolling week/day boards take each player's best unflagged score in the window. Suspended players are
   hidden. Results are cached for 30 s and invalidated when a ranked score is submitted.
+
+## Progression: achievements, daily challenges, notifications
+
+`apps/api/src/modules/progression`. Everything is derived on the server from recorded rounds; the client never claims
+progress.
+
+- **Counted rounds** (`snapshot.ts`): finished, not a staff preview, not flagged, and at least 10 s of active play.
+- **Round pipeline:** `finishSession` locks the player's row, records the round and its XP, then calls
+  `applyProgression` in the same transaction: daily challenge progress → achievements → (repeat while bonus XP raises the
+  level, so level achievements chain) → one XP/level write → a level-up notification.
+- **Achievements** are rows with declarative JSON criteria (validated by `achievementCriteriaSchema`); unknown or invalid
+  criteria are skipped and logged, never guessed. The launch set lives in `packages/game-catalog/src/achievements.ts`; the
+  seed creates missing ones and never overwrites admin edits.
+- **Daily challenges** are generated per UTC day on first use with a date-seeded PRNG (identical on every API instance;
+  `createMany … skipDuplicates` makes concurrent generation safe). Score goals use the median personal best once five
+  players have one. Days with challenges scheduled by an admin get no automatic ones.
+- **Notifications** are created inside the same transactions (achievement, challenge, level-up, role change, handled
+  report) and capped at the newest 200 per player. The web header polls the unread count once a minute.
+
+## Uploads
+
+`apps/api/src/lib/images.ts`. Avatars and game thumbnails are sent as raw request bodies, sniffed by magic bytes
+(PNG/JPEG/WebP/GIF), decoded by sharp with a pixel limit, checked for minimum dimensions, and re-encoded to WebP at fixed
+sizes (avatar 256 px; thumbnails 320/640/960 px for `srcset`) with metadata stripped. The bytes are stored in Postgres
+(`MediaImage`/`MediaVariant`: small, backed up with everything else, no extra infrastructure) and served from
+`/api/v1/media/<id>/<width>.webp` with immutable caching; a new upload gets a new id and the old image is deleted.
+
+## Administration
+
+`apps/api/src/modules/admin` and `apps/web/src/features/admin`. Two staff roles: **moderators** (dashboard, user
+moderation of regular players, report review, read-only catalog) and **admins** (also roles, games, categories,
+achievements, challenges and the audit log). The server checks the role on every request; the web hides what a role
+can't use only for convenience. Guardrails: no one changes their own role or status; the last active admin can't be
+suspended, demoted or deleted; destructive operations are refused when they would lose history (published games, games
+with play history, categories in use, achievements or challenges players already earned); every change is audit-logged.

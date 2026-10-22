@@ -32,14 +32,22 @@ export async function cached<T>(key: string, ttlSeconds: number, load: () => Pro
   return value;
 }
 
-/** Drops cached entries whose key starts with `prefix` (call after catalog writes). */
+/**
+ * Drops cached entries whose key starts with `prefix` (call after writes). Best effort:
+ * it runs after the write has committed, so a Redis problem must never turn a successful
+ * request into an error. Entries expire on their own TTL anyway.
+ */
 export async function invalidateCache(prefix: string): Promise<void> {
   for (const key of local.keys()) if (key.startsWith(prefix)) local.delete(key);
   if (!redis) return;
-  let cursor = '0';
-  do {
-    const [next, keys] = await redis.scan(cursor, 'MATCH', `${PREFIX}${prefix}*`, 'COUNT', 100);
-    cursor = next;
-    if (keys.length) await redis.del(...keys);
-  } while (cursor !== '0');
+  try {
+    let cursor = '0';
+    do {
+      const [next, keys] = await redis.scan(cursor, 'MATCH', `${PREFIX}${prefix}*`, 'COUNT', 100);
+      cursor = next;
+      if (keys.length) await redis.del(...keys);
+    } while (cursor !== '0');
+  } catch (err) {
+    logger.warn({ err, prefix }, 'cache invalidation failed; entries will expire on their TTL');
+  }
 }

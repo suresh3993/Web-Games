@@ -123,6 +123,8 @@ export interface GameSummary {
   title: string;
   shortDescription: string;
   thumbnailUrl: string | null;
+  /** `srcset` for responsive thumbnails (WebP widths), when an image was uploaded. */
+  thumbnailSrcSet: string | null;
   difficulty: Difficulty;
   supportedDevices: DeviceType[];
   estimatedMinutes: number;
@@ -155,6 +157,11 @@ export interface GameDetail extends GameSummary {
 /** Mirrors `GameOutcome` in @playverse/game-runtime. */
 export const GAME_OUTCOMES = ['won', 'lost', 'completed', 'quit'] as const;
 export type GameOutcome = (typeof GAME_OUTCOMES)[number];
+
+/** Highest score the API accepts at all (fits a Postgres INT); per-game plausibility limits are stricter. */
+export const SCORE_HARD_LIMIT = 2_000_000_000;
+/** Longest round the API accepts. */
+export const MAX_ROUND_MS = 4 * 60 * 60 * 1000;
 
 export const LEADERBOARD_PERIODS = ['all', 'week', 'day'] as const;
 export type LeaderboardPeriod = (typeof LEADERBOARD_PERIODS)[number];
@@ -221,6 +228,11 @@ export interface GameSessionResult {
   xp: number;
   level: number;
   leveledUp: boolean;
+  /** Achievements unlocked by this round (their XP is included in `bonusXp`). */
+  achievements: UnlockedAchievement[];
+  /** Daily challenges completed by this round (their XP is included in `bonusXp`). */
+  challengesCompleted: CompletedChallenge[];
+  bonusXp: number;
 }
 
 export interface LeaderboardEntry {
@@ -272,4 +284,303 @@ export interface HealthResponse {
   status: 'ok' | 'degraded';
   uptimeSeconds: number;
   checks: { database: 'ok' | 'error'; redis: 'ok' | 'error' | 'disabled' };
+}
+
+// ---------------------------------------------------------------------------
+// Profile & account
+// ---------------------------------------------------------------------------
+
+/** Accepted upload types (detected from the file bytes, never the declared type). */
+export const IMAGE_UPLOAD_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'] as const;
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+export const THUMBNAIL_MAX_BYTES = 5 * 1024 * 1024;
+
+export interface ProfileStats {
+  /** Finished rounds that passed plausibility checks (preview rounds excluded). */
+  rounds: number;
+  gamesPlayed: number;
+  playTimeMs: number;
+  wins: number;
+  achievementsUnlocked: number;
+  achievementsTotal: number;
+  challengesCompleted: number;
+  /** Position on the global XP leaderboard (null without XP). */
+  globalRank: number | null;
+  /** XP at which the current level started and the next one begins. */
+  levelStartXp: number;
+  nextLevelXp: number;
+}
+
+export interface UserProfile {
+  user: CurrentUser;
+  stats: ProfileStats;
+}
+
+// ---------------------------------------------------------------------------
+// Achievements
+// ---------------------------------------------------------------------------
+
+export const ACHIEVEMENT_ICONS = [
+  'Trophy', 'Medal', 'Star', 'Flame', 'Crown', 'Target', 'Zap', 'Compass', 'Gamepad2', 'Timer',
+  'Swords', 'Puzzle', 'Brain', 'Rocket', 'Award', 'Sparkles', 'CalendarCheck', 'Map', 'Heart', 'Gem',
+] as const;
+export type AchievementIcon = (typeof ACHIEVEMENT_ICONS)[number];
+
+/**
+ * Declarative unlock rules, evaluated by the API from recorded rounds (never from
+ * client claims). Only rounds that passed plausibility checks count.
+ */
+export type AchievementCriteria =
+  | { type: 'rounds_played'; count: number }
+  | { type: 'distinct_games'; count: number }
+  | { type: 'wins'; count: number; game?: string }
+  | { type: 'score_at_least'; game: string; value: number }
+  | { type: 'level_reached'; level: number }
+  | { type: 'play_minutes'; minutes: number }
+  | { type: 'category_games'; category: string; count: number }
+  | { type: 'daily_challenges'; count: number };
+
+export const ACHIEVEMENT_CRITERIA_TYPES = [
+  'rounds_played', 'distinct_games', 'wins', 'score_at_least', 'level_reached', 'play_minutes', 'category_games', 'daily_challenges',
+] as const satisfies readonly AchievementCriteria['type'][];
+
+export interface AchievementSummary {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  icon: string;
+  xpReward: number;
+  game: { slug: string; title: string } | null;
+  /** Players who unlocked it. */
+  unlockedBy: number;
+}
+
+export interface MyAchievement extends AchievementSummary {
+  unlockedAt: string | null;
+  progress: { current: number; target: number };
+}
+
+export interface UnlockedAchievement {
+  key: string;
+  name: string;
+  icon: string;
+  xpReward: number;
+}
+
+// ---------------------------------------------------------------------------
+// Daily challenges
+// ---------------------------------------------------------------------------
+
+export const CHALLENGE_TYPES = ['PLAY_GAMES', 'REACH_SCORE', 'PLAY_MINUTES', 'PLAY_CATEGORY'] as const;
+export type ChallengeType = (typeof CHALLENGE_TYPES)[number];
+
+export interface DailyChallengeView {
+  id: string;
+  /** UTC day, YYYY-MM-DD. */
+  date: string;
+  title: string;
+  description: string;
+  type: ChallengeType;
+  target: number;
+  xpReward: number;
+  game: { slug: string; title: string } | null;
+  category: { slug: string; name: string } | null;
+  /** Null for guests. */
+  progress: number | null;
+  completedAt: string | null;
+}
+
+export interface DailyChallenges {
+  date: string;
+  /** Next UTC midnight. */
+  resetsAt: string;
+  challenges: DailyChallengeView[];
+}
+
+export interface CompletedChallenge {
+  id: string;
+  title: string;
+  xpReward: number;
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+export const NOTIFICATION_TYPES = ['SYSTEM', 'ACHIEVEMENT', 'CHALLENGE', 'LEVEL_UP', 'MODERATION'] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+export interface NotificationItem {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  /** In-app path, e.g. "/achievements". */
+  link: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface UnreadCount {
+  unread: number;
+}
+
+// ---------------------------------------------------------------------------
+// Administration
+// ---------------------------------------------------------------------------
+
+/** Icon names a category may use (rendered by the web app). */
+export const CATEGORY_ICONS = [
+  'Joystick', 'Puzzle', 'Brain', 'CarFront', 'Trophy', 'Castle', 'Grid3x3', 'Spade', 'Sparkles', 'Footprints', 'Layers', 'Type', 'Sigma', 'Users',
+] as const;
+
+export const REPORT_STATUSES = ['OPEN', 'IN_REVIEW', 'RESOLVED', 'DISMISSED'] as const;
+export type ReportStatus = (typeof REPORT_STATUSES)[number];
+
+export interface DayCount {
+  date: string;
+  count: number;
+}
+
+export interface AdminDashboard {
+  totals: {
+    users: number;
+    verifiedUsers: number;
+    suspendedUsers: number;
+    newUsers7d: number;
+    activeUsers1d: number;
+    activeUsers7d: number;
+    activeUsers30d: number;
+    launches1d: number;
+    launches7d: number;
+    launches30d: number;
+    gamesByStatus: Record<GameStatus, number>;
+    openReports: number;
+    flaggedScores7d: number;
+  };
+  launchesByDay: DayCount[];
+  signupsByDay: DayCount[];
+  topGames: { slug: string; title: string; launches: number; players: number }[];
+  categories: { slug: string; name: string; launches: number; players: number; games: number }[];
+  health: {
+    database: { status: 'ok' | 'error'; latencyMs: number | null };
+    redis: 'ok' | 'error' | 'disabled';
+    uptimeSeconds: number;
+    nodeVersion: string;
+    environment: string;
+    memoryMb: number;
+    activeSessions: number;
+    activeRounds: number;
+  };
+}
+
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: Role;
+  status: AccountStatus;
+  emailVerified: boolean;
+  xp: number;
+  level: number;
+  createdAt: string;
+  lastLoginAt: string | null;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  action: string;
+  actor: { id: string; displayName: string; email: string } | null;
+  targetType: string | null;
+  targetId: string | null;
+  metadata: Record<string, unknown>;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+}
+
+export interface AdminUserDetail extends AdminUserRow {
+  stats: { rounds: number; flaggedScores: number; reportsFiled: number; favorites: number; activeSessions: number };
+  recentActivity: AuditLogEntry[];
+}
+
+export interface AdminGameRow {
+  id: string;
+  slug: string;
+  title: string;
+  status: GameStatus;
+  engine: GameEngine;
+  runtimeKey: string | null;
+  isFeatured: boolean;
+  playCount: number;
+  primaryCategory: { slug: string; name: string };
+  thumbnailUrl: string | null;
+  publishedAt: string | null;
+  updatedAt: string;
+  /** A staff preview round was finished: the launch flow was tested on this deployment. */
+  previewTested: boolean;
+}
+
+export interface AdminGameDetail extends AdminGameRow {
+  shortDescription: string;
+  description: string;
+  instructions: string;
+  difficulty: Difficulty;
+  supportedDevices: DeviceType[];
+  estimatedMinutes: number;
+  supportsScores: boolean;
+  maxScore: number | null;
+  multiplayerMode: string | null;
+  licenseType: LicenseType;
+  licenseNotes: string | null;
+  categories: string[];
+  thumbnailSrcSet: string | null;
+}
+
+export interface AdminCategory {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  accentColor: string;
+  sortOrder: number;
+  gameCount: number;
+  publishedCount: number;
+}
+
+export interface AdminReport {
+  id: string;
+  game: { slug: string; title: string };
+  reporter: { id: string; displayName: string } | null;
+  reason: ReportReason;
+  details: string;
+  status: ReportStatus;
+  resolutionNote: string | null;
+  resolvedBy: { id: string; displayName: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminAchievement extends AchievementSummary {
+  criteria: AchievementCriteria;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AdminChallenge {
+  id: string;
+  date: string;
+  key: string;
+  title: string;
+  description: string;
+  type: ChallengeType;
+  target: number;
+  xpReward: number;
+  game: { slug: string; title: string } | null;
+  category: { slug: string; name: string } | null;
+  participants: number;
+  completions: number;
 }

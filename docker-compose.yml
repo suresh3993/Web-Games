@@ -113,6 +113,8 @@ services:
     build:
       context: .
       target: web
+      args:
+        VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-}
     restart: unless-stopped
     ports:
       - "127.0.0.1:8080:80"

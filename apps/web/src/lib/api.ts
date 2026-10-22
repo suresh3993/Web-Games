@@ -69,10 +69,15 @@ function buildUrl(path: string, query?: RequestOptions['query']): string {
   return `${API_BASE}${path}${qs ? `?${qs}` : ''}`;
 }
 
+/** Absolute API URL for a path (for downloads that bypass `api()`). */
+export const apiUrl = (path: string) => buildUrl(path);
+
 async function send(path: string, options: RequestOptions, retried: boolean): Promise<Response> {
   const method = options.method ?? 'GET';
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  // Files (avatars, thumbnails) are sent as raw bytes; everything else as JSON.
+  const isFile = typeof Blob !== 'undefined' && options.body instanceof Blob;
+  if (options.body !== undefined) headers['Content-Type'] = isFile ? (options.body as Blob).type || 'application/octet-stream' : 'application/json';
   if (UNSAFE_METHODS.has(method)) headers['X-CSRF-Token'] = await getCsrfToken();
 
   let res: Response;
@@ -81,7 +86,7 @@ async function send(path: string, options: RequestOptions, retried: boolean): Pr
       method,
       headers,
       credentials: 'include',
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: options.body === undefined ? undefined : isFile ? (options.body as Blob) : JSON.stringify(options.body),
       signal: options.signal,
       keepalive: options.keepalive,
     });

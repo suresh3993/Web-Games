@@ -1,8 +1,7 @@
 import { ChevronLeft, ChevronRight, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
-import { DEVICE_TYPES, DIFFICULTIES, GAME_SORTS, type GameSort, type PublicGameStatus } from '@playverse/shared-types';
-import type { ListGamesQueryInput } from '@playverse/validation';
+import { DEVICE_TYPES, DIFFICULTIES, GAME_SORTS, type GameSort } from '@playverse/shared-types';
 import { EmptyState } from '@/components/empty-state';
 import { GameGrid } from '@/components/game/game-card';
 import { QueryError } from '@/components/query-error';
@@ -10,9 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn, formatNumber, titleCase } from '@/lib/utils';
-import { useCategories, useGames } from './api';
+import { exploreQuery, useCategories, useGames } from './api';
 
-const PAGE_SIZE = 24;
 const SORT_LABELS: Record<GameSort, string> = {
   popular: 'Most popular',
   newest: 'Newest',
@@ -23,24 +21,11 @@ const SORT_LABELS: Record<GameSort, string> = {
 const selectClass =
   'h-10 w-full rounded-md border border-input bg-card/60 px-3 text-sm focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40';
 
-const csv = (value: string | null) => (value ? value.split(',').filter(Boolean) : []);
-
 /** All filter state lives in the URL so results are shareable and survive reloads. */
 function useExploreParams() {
   const [params, setParams] = useSearchParams();
-  const sortParam = params.get('sort');
-  const statusParam = params.get('status');
-  const page = Math.max(1, Number(params.get('page')) || 1);
-  const query: ListGamesQueryInput = {
-    q: params.get('q') ?? undefined,
-    category: params.get('category') ?? undefined,
-    difficulty: csv(params.get('difficulty')),
-    device: csv(params.get('device')),
-    status: statusParam === 'PUBLISHED' || statusParam === 'COMING_SOON' ? (statusParam as PublicGameStatus) : undefined,
-    sort: GAME_SORTS.includes(sortParam as GameSort) ? (sortParam as GameSort) : 'popular',
-    page,
-    pageSize: PAGE_SIZE,
-  };
+  const query = exploreQuery(params);
+  const page = query.page as number;
 
   const update = (patch: Record<string, string | string[] | undefined>, resetPage = true) => {
     setParams(

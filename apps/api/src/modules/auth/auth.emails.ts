@@ -66,3 +66,27 @@ export function passwordChangedEmail(to: string, displayName: string): MailMessa
     ),
   };
 }
+
+export function accountDeletedEmail(to: string, displayName: string): MailMessage {
+  return {
+    to,
+    subject: 'Your PLAYVERSE account was deleted',
+    text: `Hi ${displayName},\n\nYour PLAYVERSE account and its personal data have been deleted, as you requested.\nIf you did not do this, contact support straight away.\n\nThanks for playing.`,
+    html: layout(
+      'Account deleted',
+      `<p>Hi ${escapeHtml(displayName)},</p><p>Your PLAYVERSE account and its personal data have been deleted, as you requested.</p><p>If you did not do this, contact support straight away.</p><p>Thanks for playing.</p>`,
+    ),
+  };
+}
+
+export function accountSuspendedEmail(to: string, displayName: string, reason: string): MailMessage {
+  return {
+    to,
+    subject: 'Your PLAYVERSE account was suspended',
+    text: `Hi ${displayName},\n\nYour PLAYVERSE account has been suspended by a moderator.\nReason: ${reason}\n\nIf you think this is a mistake, reply to this email or contact support.`,
+    html: layout(
+      'Account suspended',
+      `<p>Hi ${escapeHtml(displayName)},</p><p>Your PLAYVERSE account has been suspended by a moderator.</p><p><strong>Reason:</strong> ${escapeHtml(reason)}</p><p>If you think this is a mistake, reply to this email or contact support.</p>`,
+    ),
+  };
+}

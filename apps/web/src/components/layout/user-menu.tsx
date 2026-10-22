@@ -1,4 +1,4 @@
-import { Heart, History, LogOut, MonitorSmartphone, Trophy } from 'lucide-react';
+import { CalendarCheck, Heart, History, LogOut, Medal, MonitorSmartphone, Settings, ShieldCheck, Trophy, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import type { CurrentUser } from '@playverse/shared-types';
@@ -21,8 +21,10 @@ export const initials = (name: string) =>
     .map((p) => p[0]!.toUpperCase())
     .join('');
 
-export function Avatar({ user, size = 'md' }: { user: CurrentUser; size?: 'md' | 'lg' }) {
-  const dimension = size === 'lg' ? 'size-12 text-base' : 'size-9 text-sm';
+const AVATAR_SIZES = { md: 'size-9 text-sm', lg: 'size-12 text-base', xl: 'size-24 text-3xl' } as const;
+
+export function Avatar({ user, size = 'md' }: { user: Pick<CurrentUser, 'displayName' | 'avatarUrl'>; size?: keyof typeof AVATAR_SIZES }) {
+  const dimension = AVATAR_SIZES[size];
   return user.avatarUrl ? (
     <img src={user.avatarUrl} alt="" className={`${dimension} rounded-full object-cover`} />
   ) : (
@@ -68,6 +70,15 @@ export function UserMenu({ user }: { user: CurrentUser }) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate('/profile')}>
+          <UserRound aria-hidden="true" /> Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/achievements')}>
+          <Medal aria-hidden="true" /> Achievements
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/challenges')}>
+          <CalendarCheck aria-hidden="true" /> Daily challenges
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate('/favorites')}>
           <Heart aria-hidden="true" /> Favourites
         </DropdownMenuItem>
@@ -77,6 +88,17 @@ export function UserMenu({ user }: { user: CurrentUser }) {
         <DropdownMenuItem onSelect={() => navigate('/leaderboards')}>
           <Trophy aria-hidden="true" /> Leaderboards
         </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => navigate('/settings')}>
+          <Settings aria-hidden="true" /> Settings
+        </DropdownMenuItem>
+        {(user.role === 'ADMIN' || user.role === 'MODERATOR') && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => navigate('/admin')}>
+              <ShieldCheck aria-hidden="true" /> Admin dashboard
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => void signOut(false)}>
           <LogOut aria-hidden="true" /> Log out

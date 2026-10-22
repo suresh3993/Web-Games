@@ -59,7 +59,8 @@ for (const slug of SLUGS) {
       if (msg.type() === 'error') problems.push(`console error: ${msg.text()}`);
     });
 
-    await page.goto(`/games/${slug}/play`);
+    // Staff preview: never scored, even for published games, so QA runs leave no data behind.
+    await page.goto(`/games/${slug}/play?preview=1`);
     const stage = page.getByTestId('game-stage');
     const play = page.getByRole('region', { name: 'Start' }).getByRole('button', { name: 'Play' });
     await (hasTouch ? play.tap() : play.click());

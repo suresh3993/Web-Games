@@ -24,6 +24,9 @@ RUN npm ci --no-audit --no-fund
 # ---- build: compile API bundle and static web app ----------------------------
 FROM deps AS build
 COPY . .
+# Browser settings are baked in at build time: docker build --build-arg VITE_SUPPORT_EMAIL=help@example.com
+ARG VITE_SUPPORT_EMAIL=
+ENV VITE_SUPPORT_EMAIL=$VITE_SUPPORT_EMAIL
 RUN npm run build
 
 # ---- seed: one-off catalog seeding (has dev tooling: tsx) ---------------------
@@ -33,12 +36,15 @@ CMD ["npm", "run", "db:seed"]
 
 # ---- prod-deps: runtime dependencies only --------------------------------------
 FROM build AS prod-deps
-RUN npm prune --omit=dev --no-audit --no-fund
+# npm may nest some API dependencies (e.g. sharp and its native binaries) under apps/api/node_modules;
+# make sure the folder exists so the runtime stage can always copy it.
+RUN npm prune --omit=dev --no-audit --no-fund && mkdir -p apps/api/node_modules
 
 # ---- api runtime ------------------------------------------------------------------
 FROM base AS api
 ENV NODE_ENV=production
 COPY --from=prod-deps --chown=node:node /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=node:node /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build --chown=node:node /app/package.json /app/prisma.config.ts ./
 COPY --from=build --chown=node:node /app/prisma ./prisma
 COPY --from=build --chown=node:node /app/apps/api/package.json ./apps/api/package.json

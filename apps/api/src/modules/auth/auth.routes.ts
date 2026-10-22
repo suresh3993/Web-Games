@@ -79,5 +79,14 @@ export function authRouter(limits: RateLimiters): Router {
     res.set('Cache-Control', 'no-store').json(body);
   });
 
+  /**
+   * Session probe for the web app: 200 with the user, or `null` for guests. Unlike /me it
+   * never answers 401, so a guest page view doesn't log a failed request in the console.
+   */
+  router.get('/session', (req, res) => {
+    const body: ApiSuccess<CurrentUser | null> = { data: req.auth ? auth.toCurrentUser(req.auth.user) : null };
+    res.set('Cache-Control', 'no-store').json(body);
+  });
+
   return router;
 }

@@ -27,8 +27,9 @@ const path = (slug: string) => `/games/${encodeURIComponent(slug)}`;
 
 // ---- gameplay (used imperatively by the player) ------------------------------------
 
-export const startGameSession = (slug: string) =>
-  api<GameSessionStart>('/game-sessions', { method: 'POST', body: { slug } });
+/** `preview`: staff-only QA round (never scored); the API refuses it for players. */
+export const startGameSession = (slug: string, preview = false) =>
+  api<GameSessionStart>('/game-sessions', { method: 'POST', body: preview ? { slug, preview: true } : { slug } });
 
 /** keepalive: the submission still completes if the player closes the tab mid-round. */
 export const finishGameSession = (id: string, body: FinishGameSessionInput) =>
@@ -44,6 +45,11 @@ export function useInvalidateAfterRound() {
     void queryClient.invalidateQueries({ queryKey: playKeys.history });
     void queryClient.invalidateQueries({ queryKey: ['leaderboards'] });
     void queryClient.invalidateQueries({ queryKey: meQueryKey }); // XP and level
+    // Achievements, challenge progress, profile stats and notifications can change too.
+    void queryClient.invalidateQueries({ queryKey: ['me', 'achievements'] });
+    void queryClient.invalidateQueries({ queryKey: ['me', 'profile'] });
+    void queryClient.invalidateQueries({ queryKey: ['me', 'notifications'] });
+    void queryClient.invalidateQueries({ queryKey: ['challenges'] });
   };
 }
 
@@ -87,7 +93,9 @@ export function useToggleFavorite(slug: string) {
   const queryClient = useQueryClient();
   const key = playKeys.myStats(slug);
   return useMutation({
-    mutationFn: (favorite: boolean) => api<void>(`${path(slug)}/favorite`, { method: favorite ? 'POST' : 'DELETE' }),
+    // The heart flips optimistically, so keepalive lets the change land even if the player
+    // navigates away (or closes the tab) right after tapping it.
+    mutationFn: (favorite: boolean) => api<void>(`${path(slug)}/favorite`, { method: favorite ? 'POST' : 'DELETE', keepalive: true }),
     onMutate: async (favorite) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<MyGameStats>(key);

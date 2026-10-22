@@ -11,6 +11,7 @@ import type { ListGamesQuery } from '@playverse/validation';
 import { prisma } from '../../database/prisma';
 import { cached } from '../../lib/cache';
 import { notFound } from '../../lib/http-error';
+import { mediaSrcSet } from '../media/media.service';
 
 export const PUBLIC = { in: [...PUBLIC_GAME_STATUSES] } satisfies Prisma.EnumGameStatusFilter;
 
@@ -22,6 +23,7 @@ export const summarySelect = {
   title: true,
   shortDescription: true,
   thumbnailUrl: true,
+  thumbnailImageId: true,
   difficulty: true,
   supportedDevices: true,
   estimatedMinutes: true,
@@ -47,6 +49,7 @@ export function toSummary(g: SummaryRow): GameSummary {
     title: g.title,
     shortDescription: g.shortDescription,
     thumbnailUrl: g.thumbnailUrl,
+    thumbnailSrcSet: g.thumbnailImageId ? mediaSrcSet(g.thumbnailImageId, 'game-thumbnail') : null,
     difficulty: g.difficulty,
     supportedDevices: g.supportedDevices,
     estimatedMinutes: g.estimatedMinutes,

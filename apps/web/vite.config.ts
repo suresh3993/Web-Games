@@ -11,8 +11,29 @@ const nginxConf = readFileSync(new URL('../../docker/nginx/nginx.conf', import.m
 const productionCsp = nginxConf.match(/Content-Security-Policy "([^"]+)"/)?.[1];
 if (!productionCsp) throw new Error('Could not read the Content-Security-Policy from docker/nginx/nginx.conf');
 
+/**
+ * Browser settings: VITE_* variables from the environment (CI, Docker build args) or, failing that,
+ * from the monorepo's root .env. Only VITE_* lines are read. Loading the whole file would let its
+ * NODE_ENV=development (meant for the API) turn `vite build` into a development build of React.
+ */
+function browserEnv(): Record<string, string> {
+  const env: Record<string, string> = {};
+  try {
+    const file = readFileSync(new URL('../../.env', import.meta.url), 'utf8');
+    for (const [, key, value] of file.matchAll(/^\s*(VITE_[A-Z0-9_]+)\s*=\s*(.*?)\s*$/gm)) {
+      if (key) env[key] = (value ?? '').replace(/^(['"])(.*)\1$/, '$2');
+    }
+  } catch {
+    // No .env (CI, Docker): the environment alone decides.
+  }
+  for (const [key, value] of Object.entries(process.env)) if (key.startsWith('VITE_') && value !== undefined) env[key] = value;
+  return env;
+}
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  envDir: false,
+  define: Object.fromEntries(Object.entries(browserEnv()).map(([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)])),
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
@@ -33,16 +54,16 @@ export default defineConfig({
       output: {
         // Every game is its own lazy chunk; name it after the game instead of "index".
         chunkFileNames(chunk) {
-          const game = chunk.facadeModuleId?.match(/[\\/]games[\\/]([a-z0-9-]+)[\\/]index\.ts$/)?.[1];
+          const game = chunk.facadeModuleId?.match(/[\/]games[\/]([a-z0-9-]+)[\/]index\.ts$/)?.[1];
           return game ? `assets/game-${game}-[hash].js` : 'assets/[name]-[hash].js';
         },
-        // Long-lived vendor chunks: app deploys don't invalidate cached framework code.
+        // Long-lived vendor chunks for code every page needs: app deploys don't invalidate cached
+        // framework code. Partly used libraries (framer-motion, Radix) are deliberately not grouped:
+        // a group is downloaded whole, so pages would load every Radix primitive and all of Motion.
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
           if (/node_modules\/(react|react-dom|scheduler|react-router)\//.test(id)) return 'react';
           if (id.includes('@tanstack')) return 'query';
-          if (/node_modules\/(framer-motion|motion-dom|motion-utils)\//.test(id)) return 'motion';
-          if (/node_modules\/(@radix-ui|@floating-ui)\//.test(id)) return 'radix';
           return undefined;
         },
       },

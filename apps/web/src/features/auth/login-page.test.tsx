@@ -42,13 +42,13 @@ describe('LoginPage', () => {
     await user.click(screen.getByRole('button', { name: 'Log in' }));
     expect(await screen.findByText('Email is required')).toBeInTheDocument();
     expect(screen.getByText('Password is required')).toBeInTheDocument();
-    expect(fetchMock.mock.calls.every(([url]) => String(url).endsWith('/auth/me'))).toBe(true);
+    expect(fetchMock.mock.calls.every(([url]) => String(url).endsWith('/auth/session'))).toBe(true);
   });
 
   it('shows the server error message on invalid credentials', async () => {
     fetchMock.mockImplementation(async (input) => {
       const url = String(input);
-      if (url.endsWith('/auth/me')) return json(401, { error: { code: 'UNAUTHENTICATED', message: 'no' } });
+      if (url.endsWith('/auth/session')) return json(200, { data: null });
       if (url.endsWith('/auth/csrf')) return json(200, { data: { csrfToken: 't' } });
       return json(401, { error: { code: 'UNAUTHENTICATED', message: 'Invalid email or password.' } });
     });
@@ -64,7 +64,7 @@ describe('LoginPage', () => {
   it('redirects to a safe ?next= target after logging in, ignoring external URLs', async () => {
     fetchMock.mockImplementation(async (input) => {
       const url = String(input);
-      if (url.endsWith('/auth/me')) return json(401, { error: { code: 'UNAUTHENTICATED', message: 'no' } });
+      if (url.endsWith('/auth/session')) return json(200, { data: null });
       if (url.endsWith('/auth/csrf')) return json(200, { data: { csrfToken: 't' } });
       return json(200, { data: { id: 'u1', displayName: 'Nova', email: 'n@e.com', emailVerified: true, role: 'USER', xp: 0, level: 1, avatarUrl: null, createdAt: '' } });
     });

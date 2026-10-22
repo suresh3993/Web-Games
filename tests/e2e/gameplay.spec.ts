@@ -95,17 +95,25 @@ test('launch, play and finish a game; the result shows up in stats, history, fav
   await expect(page.getByRole('link', { name: game!.title, exact: true })).toBeVisible();
 
   // Favourites: add on the details page, see it listed, remove it again.
+  // The heart flips optimistically, so wait for the API to confirm before leaving the page.
+  const saved = (method: 'POST' | 'DELETE') =>
+    page.waitForResponse((r) => r.url().endsWith(`/games/${game!.slug}/favorite`) && r.request().method() === method);
   await page.goto(`/games/${game!.slug}`);
   const favourite = page.getByRole('button', { name: /^Favourite/ });
+  await expect(favourite).toBeEnabled();
   if ((await favourite.getAttribute('aria-pressed')) === 'true') await favourite.click();
   await expect(favourite).toHaveAttribute('aria-pressed', 'false');
+  const added = saved('POST');
   await favourite.click();
   await expect(favourite).toHaveAttribute('aria-pressed', 'true');
+  expect((await added).ok()).toBe(true);
   await page.goto('/favorites');
   await expect(page.getByRole('link', { name: new RegExp(game!.title) }).first()).toBeVisible();
   await page.goto(`/games/${game!.slug}`);
+  const removed = saved('DELETE');
   await page.getByRole('button', { name: /^Favourite/ }).click();
   await expect(page.getByRole('button', { name: /^Favourite/ })).toHaveAttribute('aria-pressed', 'false');
+  expect((await removed).ok()).toBe(true);
 
   // Leaderboards: the per-game board and the global XP board render for this player.
   await expect(page.getByRole('heading', { name: 'Leaderboard' })).toBeVisible();

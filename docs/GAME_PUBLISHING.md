@@ -28,8 +28,9 @@ The smoke test launches **every** game through the real player page and API in C
 
 For each game it checks that the module loads, a server session starts, the game renders and takes input, the
 round can be ended, and the result screen appears, with **no game error, uncaught page error or console error**.
-Unpublished games can be launched only by staff, in *preview mode*: preview rounds create a real session but never
-scores, stats, XP or play counts.
+The test plays every game as a staff *preview* (`/games/<slug>/play?preview=1`): preview rounds create a real session but
+never scores, stats, XP, leaderboard entries or play counts, so it is safe to run against a live database, even after the
+games are published. Unpublished games can only ever be launched as staff previews.
 
 Prerequisites: the stack running (`npm run infra:up`, `npm run db:deploy`, `npm run db:seed`) and a verified
 **moderator or admin** account. To create one, set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` (a unique, strong
@@ -77,7 +78,9 @@ Then regenerate the tracker so the repository records the verification evidence:
 npm run catalog:docs
 ```
 
-## Unpublishing
+## Publishing and unpublishing from the admin area
 
-There is no admin UI yet (Milestone 6). To pull a game, set its status to `UNPUBLISHED` (for example with
-`npm run db:studio`). The seed never changes a game's status once it exists, so re-seeding keeps your decision.
+Admins can also change a game's status in **Admin → Games → (game)**. Publishing there is allowed only when the game has
+a runtime module and a staff preview round of it was finished on this deployment (open **Preview this game**, play,
+end the round). **Unpublish** hides a game from players but keeps its scores and history. Every change is audit-logged,
+and the seed never changes a game's status once it exists, so re-seeding keeps your decisions.

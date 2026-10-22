@@ -28,6 +28,8 @@ interface GameArtProps {
   accentColor: string;
   icon: string;
   thumbnailUrl?: string | null;
+  /** Responsive WebP variants for uploaded thumbnails. */
+  thumbnailSrcSet?: string | null;
   className?: string;
 }
 
@@ -35,7 +37,7 @@ interface GameArtProps {
  * Original, procedurally generated cover art (no third-party assets). A real
  * thumbnail, when an admin uploads one, takes precedence and is lazy-loaded.
  */
-export function GameArt({ slug, title, accentColor, icon, thumbnailUrl, className }: GameArtProps) {
+export function GameArt({ slug, title, accentColor, icon, thumbnailUrl, thumbnailSrcSet, className }: GameArtProps) {
   const art = useMemo(() => {
     const random = rng(hash(slug));
     const pattern = Math.floor(random() * 4);
@@ -60,6 +62,10 @@ export function GameArt({ slug, title, accentColor, icon, thumbnailUrl, classNam
     return (
       <img
         src={thumbnailUrl}
+        srcSet={thumbnailSrcSet ?? undefined}
+        sizes="(min-width: 1280px) 320px, (min-width: 768px) 33vw, 100vw"
+        width={640}
+        height={400}
         alt=""
         loading="lazy"
         decoding="async"

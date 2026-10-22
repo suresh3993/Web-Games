@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadGameModule, RUNTIME_KEYS, hasRuntime } from '@playverse/game-runtime';
-import { CATEGORIES, GAMES } from './index';
+import { achievementInputSchema } from '@playverse/validation';
+import { ACHIEVEMENTS, CATEGORIES, GAMES } from './index';
 
 const FIRST_MILESTONE = [
   'snake',
@@ -80,5 +81,28 @@ describe('game catalog integrity', () => {
       expect(module.manifest.engine, game.slug).toBe(game.engine);
       if (game.supportsScores) expect(module.manifest.scoring?.maxScore ?? 0, game.slug).toBeGreaterThan(0);
     }
+    // Imports all 114 game modules (TypeScript transformed on the fly): allow for slow machines.
+  }, 60_000);
+});
+
+describe('achievement catalog', () => {
+  it('has unique keys and criteria the API accepts, referencing real games and categories', () => {
+    expect(new Set(ACHIEVEMENTS.map((a) => a.key)).size).toBe(ACHIEVEMENTS.length);
+    const games = new Set(GAMES.map((g) => g.slug));
+    const categories = new Set<string>(CATEGORIES.map((c) => c.slug));
+    for (const a of ACHIEVEMENTS) {
+      expect(achievementInputSchema.safeParse(a).success, a.key).toBe(true);
+      const c = a.criteria;
+      if ((c.type === 'wins' || c.type === 'score_at_least') && c.game) expect(games.has(c.game), `${a.key} → ${c.game}`).toBe(true);
+      if (c.type === 'category_games') expect(categories.has(c.category), `${a.key} → ${c.category}`).toBe(true);
+    }
   });
+
+  it('only sets score thresholds a game can actually reach', async () => {
+    for (const a of ACHIEVEMENTS) {
+      if (a.criteria.type !== 'score_at_least') continue;
+      const module = await loadGameModule(a.criteria.game);
+      expect(a.criteria.value, a.key).toBeLessThanOrEqual(module.manifest.scoring?.maxScore ?? 0);
+    }
+  }, 30_000);
 });

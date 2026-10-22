@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { GameController, loadGameModule, type FinishedRound, type GameModule, type Viewport } from '@playverse/game-runtime';
-import type { GameSessionResult, GameSessionStart } from '@playverse/shared-types';
-import { MAX_ROUND_MS, SCORE_HARD_LIMIT, type FinishGameSessionInput } from '@playverse/validation';
+import { MAX_ROUND_MS, SCORE_HARD_LIMIT, type GameSessionResult, type GameSessionStart } from '@playverse/shared-types';
+import type { FinishGameSessionInput } from '@playverse/validation';
 import { isApiError } from '@/lib/api';
 import { finishGameSession, sendHeartbeat, startGameSession, useInvalidateAfterRound } from './api';
 
@@ -61,7 +61,8 @@ export function toSubmission(round: FinishedRound): FinishGameSessionInput {
  * Rounds ended by restarting or leaving the page are submitted "silently" (as
  * `quit`) so the play still counts but no result screen is shown.
  */
-export function useGameRunner(slug: string, runtimeKey: string) {
+export function useGameRunner(slug: string, runtimeKey: string, options: { preview?: boolean } = {}) {
+  const requestPreview = Boolean(options.preview);
   const containerRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<GameController | null>(null);
   const silentRef = useRef(false);
@@ -149,7 +150,7 @@ export function useGameRunner(slug: string, runtimeKey: string) {
 
     let s: GameSessionStart;
     try {
-      s = await startGameSession(slug);
+      s = await startGameSession(slug, requestPreview);
     } catch (err) {
       if (!mountedRef.current) return;
       setError(isApiError(err) ? err.message : 'The game could not be started. Please try again.');
@@ -188,7 +189,7 @@ export function useGameRunner(slug: string, runtimeKey: string) {
     setSession(s);
     controller.start();
     focusGame();
-  }, [endSilently, focusGame, module, slug, submit, viewport]);
+  }, [endSilently, focusGame, module, requestPreview, slug, submit, viewport]);
 
   const pause = useCallback(() => controllerRef.current?.pause(), []);
   const resume = useCallback(() => {

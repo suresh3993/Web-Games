@@ -1,24 +1,26 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CurrentUser, MessageResponse } from '@playverse/shared-types';
 import type { ForgotPasswordInput, LoginInput, RegisterInput, ResetPasswordInput } from '@playverse/validation';
 import { api, isApiError, resetCsrfToken } from '@/lib/api';
 
 export const meQueryKey = ['auth', 'me'] as const;
 
-/** Current user, or `null` when logged out. Never throws for 401. */
+/** Current user, or `null` when logged out (the session probe never answers 401). */
+export const currentUserQuery = queryOptions({
+  queryKey: meQueryKey,
+  queryFn: async () => {
+    try {
+      return await api<CurrentUser | null>('/auth/session');
+    } catch (err) {
+      if (isApiError(err) && err.status === 401) return null;
+      throw err;
+    }
+  },
+  staleTime: 5 * 60_000,
+});
+
 export function useCurrentUser() {
-  return useQuery({
-    queryKey: meQueryKey,
-    queryFn: async () => {
-      try {
-        return await api<CurrentUser>('/auth/me');
-      } catch (err) {
-        if (isApiError(err) && err.status === 401) return null;
-        throw err;
-      }
-    },
-    staleTime: 5 * 60_000,
-  });
+  return useQuery(currentUserQuery);
 }
 
 export function useLogin() {

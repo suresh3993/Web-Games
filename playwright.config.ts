@@ -50,11 +50,13 @@ export default defineConfig({
     },
   ],
   // Started (and stopped afterwards) unless already running; skipped for a remote E2E_BASE_URL.
+  // Plain `node` commands (no npm or watch wrappers) so stopping the server stops the whole process.
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : [
         {
-          command: 'npm run dev -w @playverse/api',
+          command: 'node --import tsx src/server.ts',
+          cwd: 'apps/api',
           url: `http://localhost:${apiPort}/api/v1/health`,
           env: { API_PORT: String(apiPort) },
           reuseExistingServer: true,
@@ -62,8 +64,9 @@ export default defineConfig({
         },
         {
           command: previewBuild
-            ? `npm run build -w @playverse/web && npm run preview -w @playverse/web -- --port ${webPort} --strictPort`
-            : `npm run dev -w @playverse/web -- --port ${webPort}`,
+            ? `node ../../node_modules/vite/bin/vite.js build && node ../../node_modules/vite/bin/vite.js preview --port ${webPort} --strictPort`
+            : `node ../../node_modules/vite/bin/vite.js --port ${webPort} --strictPort`,
+          cwd: 'apps/web',
           url: `http://localhost:${webPort}`,
           env: { API_PROXY_TARGET: `http://localhost:${apiPort}` },
           reuseExistingServer: true,

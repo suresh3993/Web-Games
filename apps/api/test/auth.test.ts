@@ -164,10 +164,19 @@ describe('login, sessions and logout', () => {
     expect(me.status).toBe(200);
     expect(me.body.data.id).toBe(user.id);
 
+    // The session probe returns the same user; for guests it answers 200 with null, never 401.
+    const session = await client.get('/api/v1/auth/session');
+    expect(session.status).toBe(200);
+    expect(session.headers['cache-control']).toMatch(/no-store/);
+    expect(session.body.data.id).toBe(user.id);
+    const guest = await createClient().get('/api/v1/auth/session');
+    expect(guest.status).toBe(200);
+    expect(guest.body.data).toBeNull();
+
     // The raw cookie token is never stored.
     const raw = cookie.match(/pv_session=([A-Za-z0-9_-]{43})/)![1]!;
-    const session = await prisma.session.findFirstOrThrow({ where: { userId: user.id } });
-    expect(session.tokenHash).toBe(hashToken(raw));
+    const stored = await prisma.session.findFirstOrThrow({ where: { userId: user.id } });
+    expect(stored.tokenHash).toBe(hashToken(raw));
   });
 
   it('uses the same generic error for unknown emails and wrong passwords', async () => {

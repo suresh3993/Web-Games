@@ -44,6 +44,40 @@ when `API_DOCS_ENABLED` is true (the default outside production).
 | GET | `/users/me/favorites` | user | Favourite games, newest first |
 | GET | `/users/me/history` | user | Recently played with personal bests, plays and play time |
 | GET | `/leaderboards/global` | optional | Players ranked by total XP (`limit≤100`) |
+| GET | `/users/me` | user | Profile: current user plus stats (rounds, games played, play time, wins, achievements, challenges, global rank, level bounds) |
+| PATCH | `/users/me` | user | `{ displayName }` (unknown fields such as `role` are ignored) |
+| PUT / DELETE | `/users/me/avatar` | user | Raw image body (PNG/JPEG/WebP/GIF, ≤ 2 MB, ≥ 64×64); re-encoded to a 256 px WebP |
+| POST | `/users/me/password` | user | `{ currentPassword, newPassword }`; signs out every other session; emails a notice |
+| GET | `/users/me/export` | user | Personal-data export as a JSON attachment (no password, session or token hashes); 5/hour |
+| DELETE | `/users/me` | user | `{ password }`; deletes the account and personal data (reports and audit entries kept, unlinked); the last admin cannot |
+| GET | `/users/me/achievements` | user | Every achievement with the player's progress and unlock date |
+| GET | `/achievements` | — | Public catalog of active achievements with unlock counts |
+| GET | `/challenges/daily` | optional | Today's (UTC) challenges; progress for logged-in players |
+| POST | `/challenges/:id/progress` | user | Recomputes progress on one of today's challenges from recorded rounds (no client-supplied amount) |
+| GET | `/notifications` | user | `unread`, `page`, `pageSize`; newest first |
+| GET | `/notifications/unread-count` | user | `{ unread }` |
+| POST | `/notifications/:id/read`, `/notifications/read-all` | user | Idempotent |
+| GET | `/media/:id/:width.webp` | — | Uploaded image variants; immutable, `nosniff`, own rate limit |
+
+### Administration
+
+All `/admin` routes require a staff role, checked on the server for every request (the role is re-read from the
+database each time). Writes are rate-limited per account and recorded in the audit log.
+
+| Method | Path | Role | Notes |
+|---|---|---|---|
+| GET | `/admin/dashboard` | moderator | Users, active users (1/7/30 days), launches, top games, category performance, 30-day series, health |
+| GET | `/admin/users`, `/admin/users/:id` | moderator | Search (`q`, `role`, `status`, `sort`); detail with stats and recent activity |
+| PATCH | `/admin/users/:id/status` | moderator | `{ status, reason }`. Moderators act on regular players only; nobody on themselves; never the last admin. Suspension signs the user out and emails the reason |
+| PATCH | `/admin/users/:id/role` | admin | `{ role }`. Never your own role; never demotes the last admin. The user is notified |
+| GET / PATCH | `/admin/reports`, `/admin/reports/:id` | moderator | Review queue; resolving or dismissing notifies the reporter |
+| GET | `/admin/games`, `/admin/games/:id` | moderator | Every status; includes `previewTested` |
+| POST / PATCH / DELETE | `/admin/games[/:id]` | admin | Create entries (DRAFT/COMING_SOON; runtimes ship with the code), edit metadata and categories, change status. **Publishing requires a runtime and a finished staff preview round of that game on this deployment.** Delete only unpublished entries without history or reports |
+| PUT / DELETE | `/admin/games/:id/thumbnail` | admin | Raw image ≤ 5 MB, ≥ 320×200 → WebP at 320/640/960 px (`thumbnailSrcSet` in public responses) |
+| GET / POST / PATCH / DELETE | `/admin/categories[/:id]` | moderator reads, admin writes | Delete only if no game uses it as main category and no challenge refers to it |
+| GET / POST / PATCH / DELETE | `/admin/achievements[/:id]` | admin | Criteria validated (`rounds_played`, `distinct_games`, `wins`, `score_at_least`, `level_reached`, `play_minutes`, `category_games`, `daily_challenges`); unlocked achievements can only be deactivated |
+| GET / POST / PATCH / DELETE | `/admin/challenges[/:id]` | admin | Date range (default ±7 days); days with scheduled challenges get no automatic ones; completed challenges can't be deleted |
+| GET | `/admin/audit-logs` | admin | Filters: `action` prefix, `actorId`, `targetType`, `targetId`, `from`, `to` |
 
 ### Gameplay rules
 
@@ -64,9 +98,17 @@ when `API_DOCS_ENABLED` is true (the default outside production).
 - **Abandoned rounds.** Sessions without a heartbeat for 15 minutes (or older than 4 hours) are closed as
   `ABANDONED` when the player starts another round, and can no longer be submitted.
 
-## Planned endpoints (see ROADMAP)
+### Progression rules
 
-Progression (M4): `GET /users/me/achievements`, `GET /challenges/daily`, `POST /challenges/:id/progress`.
-Admin (M6): `GET /admin/dashboard`, CRUD `/admin/games`, CRUD `/admin/categories`, `GET /admin/users`,
-`PATCH /admin/users/:id/status`, `GET|PATCH /admin/reports`, `GET /admin/audit-logs`. These will be guarded server-side
-by `requireRole()` (already implemented and tested).
+- **Counted rounds.** Achievements and daily challenges count rounds that finished, were not staff previews, passed the
+  plausibility checks and lasted at least 10 seconds (the same bar as XP), so instant start-and-quit rounds can't be farmed.
+- **Achievements** are evaluated on the server from recorded rounds, in the same transaction as the round. Unlocks are
+  idempotent (primary key per player and achievement), their XP goes through the XP ledger (unique source key), and
+  level achievements chain when bonus XP raises the level. The round result lists what was unlocked.
+- **Daily challenges** (UTC days): three are generated on first use, deterministically from the date (a rounds goal, a
+  category goal, and a game goal that asks for a score near the game's median personal best once at least five players
+  have one). Progress is always recomputed from that day's counted rounds; completion awards XP once.
+- **Notifications** are created for achievements, completed challenges, level-ups, role changes and handled reports;
+  the newest 200 per player are kept.
+
+The OpenAPI document covers every route (enforced by `apps/api/test/openapi.test.ts`).

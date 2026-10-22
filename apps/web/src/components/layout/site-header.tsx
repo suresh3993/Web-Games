@@ -1,9 +1,10 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { Menu, Search, X } from 'lucide-react';
 import { useEffect, useId, useState, type FormEvent } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NotificationBell } from '@/features/account/notification-bell';
 import { useCurrentUser } from '@/features/auth/api';
 import { cn } from '@/lib/utils';
 import { Logo } from './logo';
@@ -40,7 +41,14 @@ function HeaderSearch({ className, onSubmitted }: { className?: string; onSubmit
 function AuthActions({ stacked = false }: { stacked?: boolean }) {
   const { data: user, isPending } = useCurrentUser();
   if (isPending) return <div className="size-9" aria-hidden="true" />;
-  if (user) return <UserMenu user={user} />;
+  if (user) {
+    return (
+      <div className="flex items-center gap-1">
+        <NotificationBell />
+        <UserMenu user={user} />
+      </div>
+    );
+  }
   return (
     <div className={cn('flex gap-2', stacked && 'flex-col')}>
       <Button asChild variant="ghost">
@@ -114,7 +122,7 @@ export function SiteHeader() {
 
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             id="mobile-nav"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -140,7 +148,7 @@ export function SiteHeader() {
               </nav>
               <AuthActions stacked />
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </header>

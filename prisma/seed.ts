@@ -7,9 +7,9 @@
  *  - No default administrator. An admin is created/promoted only when SEED_ADMIN_EMAIL and
  *    SEED_ADMIN_PASSWORD are both provided (and the password meets the policy).
  */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 import { config } from 'dotenv';
-import { CATEGORIES, GAMES } from '@playverse/game-catalog';
+import { ACHIEVEMENTS, CATEGORIES, GAMES } from '@playverse/game-catalog';
 import { loadGameModule } from '@playverse/game-runtime';
 import { passwordSchema, emailSchema } from '@playverse/validation';
 import { hashPassword } from '../apps/api/src/modules/auth/password';
@@ -79,6 +79,29 @@ async function seedGames(categoryIds: Map<string, string>) {
   return created;
 }
 
+/** Creates missing achievements; existing ones are left alone so admin changes survive re-seeding. */
+async function seedAchievements() {
+  let created = 0;
+  for (const a of ACHIEVEMENTS) {
+    if (await prisma.achievement.findUnique({ where: { key: a.key }, select: { id: true } })) continue;
+    const gameSlug = a.criteria.type === 'wins' || a.criteria.type === 'score_at_least' ? a.criteria.game : undefined;
+    const game = gameSlug ? await prisma.game.findUnique({ where: { slug: gameSlug }, select: { id: true } }) : null;
+    await prisma.achievement.create({
+      data: {
+        key: a.key,
+        name: a.name,
+        description: a.description,
+        icon: a.icon,
+        xpReward: a.xpReward,
+        criteria: a.criteria as Prisma.InputJsonObject,
+        gameId: game?.id ?? null,
+      },
+    });
+    created++;
+  }
+  return created;
+}
+
 async function seedAdmin() {
   const rawEmail = process.env.SEED_ADMIN_EMAIL?.trim();
   const rawPassword = process.env.SEED_ADMIN_PASSWORD;
@@ -114,6 +137,8 @@ async function main() {
   console.log(`• Upserted ${categoryIds.size} categories.`);
   const created = await seedGames(categoryIds);
   console.log(`• Upserted ${GAMES.length} catalog games (${created} new, created as COMING_SOON).`);
+  const achievements = await seedAchievements();
+  console.log(`• Achievements: ${achievements} created (${ACHIEVEMENTS.length - achievements} already present, left unchanged).`);
   await seedAdmin();
 }
 
